@@ -16,9 +16,10 @@ export async function GET() {
     myOpenTasks,
     overdueTasks,
     cohortMembers,
-    myProjects,
-    myAssignedTasks,
     projectsWithTasks,
+    myProjectsEver,
+    myTasksEver,
+    myPeerAssignmentsEver,
   ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { archived: false } }),
@@ -44,15 +45,23 @@ export async function GET() {
       },
     }),
     prisma.user.count(),
-    prisma.project.count({ where: { ownerId: user.id, archived: false } }),
-    prisma.task.count({
-      where: { assigneeId: { not: null }, archived: false, project: { archived: false } },
-    }),
     prisma.project.findMany({
       where: { archived: false },
       include: { tasks: { where: { archived: false }, select: { status: true } } },
       orderBy: { updatedAt: "desc" },
       take: 6,
+    }),
+    // Onboarding: lifetime counts (include archived) so progress never regresses
+    prisma.project.count({ where: { ownerId: user.id } }),
+    prisma.task.count({ where: { project: { ownerId: user.id } } }),
+    prisma.task.count({
+      where: {
+        project: { ownerId: user.id },
+        AND: [
+          { assigneeId: { not: null } },
+          { assigneeId: { not: user.id } },
+        ],
+      },
     }),
   ]);
 
@@ -85,14 +94,14 @@ export async function GET() {
   });
 
   const onboarding = {
-    hasProject: myProjects > 0,
-    hasTask: totalTasks > 0,
-    hasAssignment: myAssignedTasks > 0,
+    hasProject: myProjectsEver > 0,
+    hasTask: myTasksEver > 0,
+    hasAssignment: myPeerAssignmentsEver > 0,
     completedSteps: [
       true,
-      myProjects > 0,
-      totalTasks > 0,
-      myAssignedTasks > 0,
+      myProjectsEver > 0,
+      myTasksEver > 0,
+      myPeerAssignmentsEver > 0,
     ].filter(Boolean).length,
     totalSteps: 4,
   };
