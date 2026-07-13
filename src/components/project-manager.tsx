@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Project = {
   id: string;
@@ -26,8 +26,10 @@ export function ProjectManager({
   const [description, setDescription] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const skipInitialFetch = useRef(true);
 
   async function loadProjects() {
     setError(null);
@@ -44,6 +46,13 @@ export function ProjectManager({
   }
 
   useEffect(() => {
+    if (!showArchived && skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      setProjects(initialProjects);
+      setLoading(false);
+      return;
+    }
+
     let active = true;
     async function fetchProjects() {
       setLoading(true);
@@ -66,33 +75,40 @@ export function ProjectManager({
     return () => {
       active = false;
     };
-  }, [showArchived]);
+  }, [showArchived, initialProjects]);
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
+    if (isCreating) return;
+
     setCreateError(null);
+    setIsCreating(true);
 
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({ title, description }),
-    });
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ title, description }),
+      });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      setCreateError(
-        data?.error === "Unauthorized"
-          ? "Session expired — please sign in again."
-          : "Could not create project. Please try again.",
-      );
-      return;
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setCreateError(
+          data?.error === "Unauthorized"
+            ? "Session expired — please sign in again."
+            : "Could not create project. Please try again.",
+        );
+        return;
+      }
+
+      setTitle("");
+      setDescription("");
+      setShowArchived(false);
+      await loadProjects();
+    } finally {
+      setIsCreating(false);
     }
-
-    setTitle("");
-    setDescription("");
-    setShowArchived(false);
-    await loadProjects();
   }
 
   async function archiveProject(id: string, archived: boolean) {
@@ -161,9 +177,10 @@ export function ProjectManager({
           ) : null}
           <button
             type="submit"
-            className="w-fit rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400"
+            disabled={isCreating}
+            className="w-fit rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Create project
+            {isCreating ? "Creating…" : "Create project"}
           </button>
         </form>
       </section>

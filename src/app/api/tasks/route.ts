@@ -62,6 +62,25 @@ export async function POST(request: Request) {
     }
   }
 
+  const dueDate = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null;
+  const recentDuplicate = await prisma.task.findFirst({
+    where: {
+      title: parsed.data.title,
+      projectId: parsed.data.projectId,
+      assigneeId: parsed.data.assigneeId ?? null,
+      archived: false,
+      dueDate,
+      createdAt: { gte: new Date(Date.now() - 30_000) },
+    },
+    include: {
+      project: { select: { id: true, title: true } },
+      assignee: { select: { id: true, name: true, email: true } },
+    },
+  });
+  if (recentDuplicate) {
+    return NextResponse.json({ task: recentDuplicate });
+  }
+
   const task = await prisma.task.create({
     data: {
       title: parsed.data.title,
@@ -69,7 +88,7 @@ export async function POST(request: Request) {
       status: parsed.data.status ?? TaskStatus.TODO,
       projectId: parsed.data.projectId,
       assigneeId: parsed.data.assigneeId ?? null,
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+      dueDate,
     },
     include: {
       project: { select: { id: true, title: true } },
