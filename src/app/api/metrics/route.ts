@@ -8,25 +8,61 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [totalProjects, activeProjects, totalTasks, doneTasks, myTasks, overdueTasks, users] =
-    await Promise.all([
-      prisma.project.count(),
-      prisma.project.count({ where: { archived: false } }),
-      prisma.task.count({ where: { project: { archived: false } } }),
-      prisma.task.count({ where: { status: "DONE", project: { archived: false } } }),
-      prisma.task.count({ where: { assigneeId: user.id, project: { archived: false } } }),
-      prisma.task.count({
-        where: {
-          assigneeId: user.id,
-          status: { not: "DONE" },
-          dueDate: { lt: new Date() },
-          project: { archived: false },
-        },
-      }),
-      prisma.user.count(),
-    ]);
+  const [
+    totalProjects,
+    activeProjects,
+    totalTasks,
+    doneTasks,
+    myOpenTasks,
+    overdueTasks,
+    cohortMembers,
+    myProjects,
+    myAssignedTasks,
+    projectsWithTasks,
+  ] = await Promise.all([
+    prisma.project.count(),
+    prisma.project.count({ where: { archived: false } }),
+    prisma.task.count({ where: { project: { archived: false } } }),
+    prisma.task.count({ where: { status: "DONE", project: { archived: false } } }),
+    prisma.task.count({
+      where: {
+        assigneeId: user.id,
+        status: { not: "DONE" },
+        project: { archived: false },
+      },
+    }),
+    prisma.task.count({
+      where: {
+        assigneeId: user.id,
+        status: { not: "DONE" },
+        dueDate: { lt: new Date() },
+        project: { archived: false },
+      },
+    }),
+    prisma.user.count(),
+    prisma.project.count({ where: { ownerId: user.id, archived: false } }),
+    prisma.task.count({ where: { assigneeId: { not: null }, project: { archived: false } } }),
+    prisma.project.findMany({
+      where: { archived: false },
+      include: { tasks: { select: { status: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    }),
+  ]);
 
   const completionRate = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+
+  const projectProgress = projectsWithTasks.map((project) => {
+    const done = project.tasks.filter((t) => t.status === "DONE").length;
+    const total = project.tasks.length;
+    return {
+      id: project.id,
+      title: project.title,
+      done,
+      total,
+      progress: total === 0 ? 0 : Math.round((done / total) * 100),
+    };
+  });
 
   const nextActions = await prisma.task.findMany({
     where: {
@@ -41,6 +77,19 @@ export async function GET() {
     take: 5,
   });
 
+  const onboarding = {
+    hasProject: myProjects > 0,
+    hasTask: totalTasks > 0,
+    hasAssignment: myAssignedTasks > 0,
+    completedSteps: [
+      true,
+      myProjects > 0,
+      totalTasks > 0,
+      myAssignedTasks > 0,
+    ].filter(Boolean).length,
+    totalSteps: 4,
+  };
+
   return NextResponse.json({
     metrics: {
       totalProjects,
@@ -48,10 +97,12 @@ export async function GET() {
       totalTasks,
       doneTasks,
       completionRate,
-      myOpenTasks: myTasks,
+      myOpenTasks,
       overdueTasks,
-      cohortMembers: users,
+      cohortMembers,
     },
+    projectProgress,
     nextActions,
+    onboarding,
   });
 }

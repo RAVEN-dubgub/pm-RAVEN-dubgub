@@ -6,9 +6,9 @@ Production project management platform for the cohort: projects, tasks, assignme
 
 ## Production URL
 
-> **Deploy this repo to Vercel and paste your live URL here before opening the submission PR.**
+`https://pm-raven-dubgub.vercel.app`
 
-`https://YOUR-VERCEL-URL.vercel.app`
+> **Note:** Set `DATABASE_URL` + `AUTH_SECRET` on Vercel and run `prisma migrate deploy` for a working DB — see [DEPLOY.md](./DEPLOY.md).
 
 ## Quick start (local)
 
@@ -85,10 +85,16 @@ Browser (Next.js App Router)
 
 ## Motivation / engagement design
 
-- **Cohort snapshot** dashboard shows completion rate and shipped tasks — social proof that the cohort is moving.
-- **Next actions** panel surfaces your top 5 open assignments so you always know what to do now.
-- **Per-project progress bars** make partial wins visible before everything is done.
-- **Overdue counter** creates gentle urgency without nag emails.
+Research-backed UX (progress visibility, onboarding checklists, overdue signals):
+
+- **Onboarding checklist** — 4-step setup guide for new cohort members (project → task → assign)
+- **Hero cohort completion bar** — large progress metric with contextual motivation copy
+- **Overdue alert banner** — gentle urgency on dashboard and task cards
+- **Project momentum panel** — per-project progress bars on the dashboard
+- **Next actions** — top 5 open assignments sorted by due date
+- **Status pills + due-soon badges** — clearer task scanning
+- **Empty states with CTAs** — no blank walls when projects/tasks are missing
+- **Mobile nav** — bottom tab bar + collapsible menu for small screens
 
 ## Deploy (Vercel)
 
