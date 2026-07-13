@@ -8,6 +8,7 @@ const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(4000).optional().nullable(),
   status: z.nativeEnum(TaskStatus).optional(),
+  archived: z.boolean().optional(),
   assigneeId: z.string().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
 });
@@ -32,6 +33,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!assignee) {
       return NextResponse.json({ error: "Assignee not found" }, { status: 404 });
     }
+  }
+
+  const existing = await prisma.task.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
   const task = await prisma.task.update({

@@ -22,12 +22,15 @@ export async function GET() {
   ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { archived: false } }),
-    prisma.task.count({ where: { project: { archived: false } } }),
-    prisma.task.count({ where: { status: "DONE", project: { archived: false } } }),
+    prisma.task.count({ where: { archived: false, project: { archived: false } } }),
+    prisma.task.count({
+      where: { status: "DONE", archived: false, project: { archived: false } },
+    }),
     prisma.task.count({
       where: {
         assigneeId: user.id,
         status: { not: "DONE" },
+        archived: false,
         project: { archived: false },
       },
     }),
@@ -36,15 +39,18 @@ export async function GET() {
         assigneeId: user.id,
         status: { not: "DONE" },
         dueDate: { lt: new Date() },
+        archived: false,
         project: { archived: false },
       },
     }),
     prisma.user.count(),
     prisma.project.count({ where: { ownerId: user.id, archived: false } }),
-    prisma.task.count({ where: { assigneeId: { not: null }, project: { archived: false } } }),
+    prisma.task.count({
+      where: { assigneeId: { not: null }, archived: false, project: { archived: false } },
+    }),
     prisma.project.findMany({
       where: { archived: false },
-      include: { tasks: { select: { status: true } } },
+      include: { tasks: { where: { archived: false }, select: { status: true } } },
       orderBy: { updatedAt: "desc" },
       take: 6,
     }),
@@ -68,6 +74,7 @@ export async function GET() {
     where: {
       assigneeId: user.id,
       status: { not: "DONE" },
+      archived: false,
       project: { archived: false },
     },
     include: {

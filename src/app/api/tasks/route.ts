@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { listTasks, type TaskListMode } from "@/lib/tasks";
 
 const taskSchema = z.object({
   title: z.string().min(1).max(200),
@@ -20,23 +21,17 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const mode: TaskListMode =
+    searchParams.get("archived") === "true" ? "archived" : "active";
   const projectId = searchParams.get("projectId") ?? undefined;
   const assigneeId = searchParams.get("assigneeId") ?? undefined;
-  const status = searchParams.get("status") as TaskStatus | null;
+  const statusParam = searchParams.get("status") as TaskStatus | null;
+  const status =
+    statusParam && Object.values(TaskStatus).includes(statusParam)
+      ? statusParam
+      : undefined;
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      ...(projectId ? { projectId } : {}),
-      ...(assigneeId ? { assigneeId } : {}),
-      ...(status && Object.values(TaskStatus).includes(status) ? { status } : {}),
-      project: { archived: false },
-    },
-    include: {
-      project: { select: { id: true, title: true } },
-      assignee: { select: { id: true, name: true, email: true } },
-    },
-    orderBy: [{ dueDate: "asc" }, { updatedAt: "desc" }],
-  });
+  const tasks = await listTasks(mode, { projectId, assigneeId, status });
 
   return NextResponse.json({ tasks });
 }

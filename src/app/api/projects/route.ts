@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { listProjects, type ProjectListMode } from "@/lib/projects";
 
 const projectSchema = z.object({
   title: z.string().min(1).max(120),
@@ -15,19 +16,10 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const includeArchived = searchParams.get("archived") === "true";
+  const mode: ProjectListMode =
+    searchParams.get("archived") === "true" ? "archived" : "active";
 
-  const projects = await prisma.project.findMany({
-    where: includeArchived ? {} : { archived: false },
-    include: {
-      owner: { select: { id: true, name: true, email: true } },
-      tasks: {
-        select: { id: true, status: true, assigneeId: true, dueDate: true },
-      },
-      _count: { select: { tasks: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const projects = await listProjects(mode);
 
   return NextResponse.json({ projects });
 }

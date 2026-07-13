@@ -17,6 +17,7 @@ type TaskItem = {
   title: string;
   description: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE";
+  archived: boolean;
   dueDate: string | null;
   project: { id: string; title: string };
   assignee: UserOption | null;
@@ -29,6 +30,8 @@ export function TaskBoard() {
   const [projectFilter, setProjectFilter] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
@@ -41,22 +44,26 @@ export function TaskBoard() {
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
+    if (showArchived) params.set("archived", "true");
     if (projectFilter) params.set("projectId", projectFilter);
     if (assigneeFilter) params.set("assigneeId", assigneeFilter);
     if (statusFilter) params.set("status", statusFilter);
     return params.toString();
-  }, [projectFilter, assigneeFilter, statusFilter]);
+  }, [showArchived, projectFilter, assigneeFilter, statusFilter]);
 
   async function loadData() {
+    setListError(null);
     const [taskRes, userRes, projectRes] = await Promise.all([
-      fetch(`/api/tasks${query ? `?${query}` : ""}`),
-      fetch("/api/users"),
-      fetch("/api/projects"),
+      fetch(`/api/tasks${query ? `?${query}` : ""}`, { credentials: "same-origin" }),
+      fetch("/api/users", { credentials: "same-origin" }),
+      fetch("/api/projects", { credentials: "same-origin" }),
     ]);
 
     if (taskRes.ok) {
       const data = await taskRes.json();
       setTasks(data.tasks);
+    } else {
+      setListError("Could not load tasks. Try refreshing or signing in again.");
     }
     if (userRes.ok) {
       const data = await userRes.json();
@@ -79,10 +86,11 @@ export function TaskBoard() {
   useEffect(() => {
     let active = true;
     async function fetchData() {
+      setListError(null);
       const [taskRes, userRes, projectRes] = await Promise.all([
-        fetch(`/api/tasks${query ? `?${query}` : ""}`),
-        fetch("/api/users"),
-        fetch("/api/projects"),
+        fetch(`/api/tasks${query ? `?${query}` : ""}`, { credentials: "same-origin" }),
+        fetch("/api/users", { credentials: "same-origin" }),
+        fetch("/api/projects", { credentials: "same-origin" }),
       ]);
 
       if (!active) return;
@@ -90,6 +98,8 @@ export function TaskBoard() {
       if (taskRes.ok) {
         const data = await taskRes.json();
         setTasks(data.tasks);
+      } else {
+        setListError("Could not load tasks. Try refreshing or signing in again.");
       }
       if (userRes.ok) {
         const data = await userRes.json();
@@ -147,8 +157,33 @@ export function TaskBoard() {
     await fetch(`/api/tasks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify(patch),
     });
+    await loadData();
+  }
+
+  async function archiveTask(id: string, archived: boolean) {
+    const action = archived ? "archive" : "restore";
+    const confirmed = window.confirm(
+      archived
+        ? "Archive this task? It will be hidden from the active list until you restore it."
+        : "Restore this task to the active list?",
+    );
+    if (!confirmed) return;
+
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ archived }),
+    });
+
+    if (!response.ok) {
+      setListError(`Could not ${action} task. Please try again.`);
+      return;
+    }
+
     await loadData();
   }
 
@@ -279,16 +314,35 @@ export function TaskBoard() {
               ({tasks.length} shown)
             </span>
           </h2>
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-sm text-cyan-400 hover:text-cyan-300"
-            >
-              Clear filters
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-sm text-slate-400">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(event) => setShowArchived(event.target.checked)}
+              />
+              Show archived only
+            </label>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-sm text-cyan-400 hover:text-cyan-300"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
+
+        {listError ? (
+          <div
+            className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
+            role="alert"
+          >
+            {listError}
+          </div>
+        ) : null}
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <label>
             <span className="mb-1 block text-xs text-slate-400">Project</span>
@@ -342,10 +396,27 @@ export function TaskBoard() {
           {tasks.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center">
               <p className="text-sm text-slate-400">
-                {hasActiveFilters
-                  ? "No tasks match these filters."
-                  : "No tasks yet — add one above to get started."}
+                {showArchived
+                  ? "No archived tasks."
+                  : hasActiveFilters
+                    ? "No tasks match these filters."
+                    : "No tasks yet — add one above to get started."}
               </p>
+              {!showArchived && !hasActiveFilters && (
+                <>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Archived tasks are hidden by default. Use &quot;Show archived
+                    only&quot; to find and restore them.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowArchived(true)}
+                    className="mt-4 text-sm text-cyan-400 hover:text-cyan-300"
+                  >
+                    Check archived tasks →
+                  </button>
+                </>
+              )}
               {hasActiveFilters && (
                 <button
                   type="button"
@@ -389,6 +460,11 @@ export function TaskBoard() {
                           Due soon
                         </span>
                       )}
+                      {task.archived && (
+                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
+                          Archived
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-400">{task.project.title}</p>
                     {task.description && (
@@ -396,43 +472,54 @@ export function TaskBoard() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <label className="sr-only" htmlFor={`status-${task.id}`}>
-                      Update status for {task.title}
-                    </label>
-                    <select
-                      id={`status-${task.id}`}
-                      className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                      value={task.status}
-                      onChange={(event) =>
-                        updateTask(task.id, { status: event.target.value })
-                      }
-                      aria-label={`Status for ${task.title}`}
+                    {!task.archived && (
+                      <>
+                        <label className="sr-only" htmlFor={`status-${task.id}`}>
+                          Update status for {task.title}
+                        </label>
+                        <select
+                          id={`status-${task.id}`}
+                          className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+                          value={task.status}
+                          onChange={(event) =>
+                            updateTask(task.id, { status: event.target.value })
+                          }
+                          aria-label={`Status for ${task.title}`}
+                        >
+                          <option value="TODO">To do</option>
+                          <option value="IN_PROGRESS">In progress</option>
+                          <option value="DONE">Done</option>
+                        </select>
+                        <label className="sr-only" htmlFor={`assignee-${task.id}`}>
+                          Assign {task.title}
+                        </label>
+                        <select
+                          id={`assignee-${task.id}`}
+                          className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+                          value={task.assignee?.id ?? ""}
+                          onChange={(event) =>
+                            updateTask(task.id, {
+                              assigneeId: event.target.value || null,
+                            })
+                          }
+                          aria-label={`Assignee for ${task.title}`}
+                        >
+                          <option value="">Unassigned</option>
+                          {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name}
+                            </option>
+                          ))}
+                        </select>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => archiveTask(task.id, !task.archived)}
+                      className="rounded-lg border border-slate-700 px-2 py-1 text-sm text-slate-400 hover:text-white"
                     >
-                      <option value="TODO">To do</option>
-                      <option value="IN_PROGRESS">In progress</option>
-                      <option value="DONE">Done</option>
-                    </select>
-                    <label className="sr-only" htmlFor={`assignee-${task.id}`}>
-                      Assign {task.title}
-                    </label>
-                    <select
-                      id={`assignee-${task.id}`}
-                      className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                      value={task.assignee?.id ?? ""}
-                      onChange={(event) =>
-                        updateTask(task.id, {
-                          assigneeId: event.target.value || null,
-                        })
-                      }
-                      aria-label={`Assignee for ${task.title}`}
-                    >
-                      <option value="">Unassigned</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-                    </select>
+                      {task.archived ? "Restore task" : "Archive task"}
+                    </button>
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">

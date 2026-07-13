@@ -23,6 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
     include: {
       owner: { select: { id: true, name: true, email: true } },
       tasks: {
+        where: { archived: false },
         include: {
           assignee: { select: { id: true, name: true, email: true } },
         },
@@ -62,6 +63,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     include: {
       owner: { select: { id: true, name: true, email: true } },
       tasks: {
+        where: { archived: false },
         include: {
           assignee: { select: { id: true, name: true, email: true } },
         },

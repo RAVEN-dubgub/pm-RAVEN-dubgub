@@ -8,37 +8,58 @@ type Project = {
   title: string;
   description: string | null;
   archived: boolean;
-  owner: { name: string };
+  owner: { id?: string; name: string };
   tasks: { status: string }[];
 };
 
-export function ProjectManager() {
-  const [projects, setProjects] = useState<Project[]>([]);
+type ProjectManagerProps = {
+  initialProjects: Project[];
+  currentUserId: string;
+};
+
+export function ProjectManager({
+  initialProjects,
+  currentUserId,
+}: ProjectManagerProps) {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   async function loadProjects() {
+    setError(null);
     const response = await fetch(
       `/api/projects${showArchived ? "?archived=true" : ""}`,
+      { credentials: "same-origin" },
     );
-    if (response.ok) {
-      const data = await response.json();
-      setProjects(data.projects);
+    if (!response.ok) {
+      setError("Could not load projects. Try refreshing or signing in again.");
+      return;
     }
-    setLoading(false);
+    const data = await response.json();
+    setProjects(data.projects ?? []);
   }
 
   useEffect(() => {
     let active = true;
     async function fetchProjects() {
+      setLoading(true);
+      setError(null);
       const response = await fetch(
         `/api/projects${showArchived ? "?archived=true" : ""}`,
+        { credentials: "same-origin" },
       );
-      if (!response.ok || !active) return;
+      if (!active) return;
+      if (!response.ok) {
+        setError("Could not load projects. Try refreshing or signing in again.");
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
-      setProjects(data.projects);
+      setProjects(data.projects ?? []);
       setLoading(false);
     }
     void fetchProjects();
@@ -49,26 +70,59 @@ export function ProjectManager() {
 
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
-    await fetch("/api/projects", {
+    setCreateError(null);
+
+    const response = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify({ title, description }),
     });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setCreateError(
+        data?.error === "Unauthorized"
+          ? "Session expired — please sign in again."
+          : "Could not create project. Please try again.",
+      );
+      return;
+    }
+
     setTitle("");
     setDescription("");
+    setShowArchived(false);
     await loadProjects();
   }
 
   async function archiveProject(id: string, archived: boolean) {
-    await fetch(`/api/projects/${id}`, {
+    const action = archived ? "archive" : "restore";
+    const confirmed = window.confirm(
+      archived
+        ? "Archive this project? It will be hidden from the active list until you restore it."
+        : "Restore this project to the active list?",
+    );
+    if (!confirmed) return;
+
+    const response = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify({ archived }),
     });
+
+    if (!response.ok) {
+      setError(`Could not ${action} project. Please try again.`);
+      return;
+    }
+
     await loadProjects();
   }
 
   const activeProjects = projects.filter((p) => !p.archived);
+  const myActiveCount = activeProjects.filter(
+    (p) => p.owner.id === currentUserId,
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -100,6 +154,11 @@ export function ProjectManager() {
               aria-label="Project description"
             />
           </label>
+          {createError ? (
+            <p className="text-sm text-rose-400" role="alert">
+              {createError}
+            </p>
+          ) : null}
           <button
             type="submit"
             className="w-fit rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400"
@@ -115,7 +174,11 @@ export function ProjectManager() {
             Projects
             {!loading && (
               <span className="ml-2 text-sm font-normal text-slate-400">
-                ({activeProjects.length} active)
+                ({activeProjects.length} active
+                {myActiveCount !== activeProjects.length
+                  ? ` · ${myActiveCount} yours`
+                  : ""}
+                )
               </span>
             )}
           </h2>
@@ -125,9 +188,18 @@ export function ProjectManager() {
               checked={showArchived}
               onChange={(event) => setShowArchived(event.target.checked)}
             />
-            Show archived
+            Show archived only
           </label>
         </div>
+
+        {error ? (
+          <div
+            className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
+            role="alert"
+          >
+            {error}
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">
@@ -140,12 +212,22 @@ export function ProjectManager() {
             <p className="text-sm text-slate-400">
               {showArchived
                 ? "No archived projects."
-                : "No projects yet — create one above to get started."}
+                : "No active projects yet — create one above to get started."}
             </p>
             {!showArchived && (
-              <p className="mt-2 text-xs text-slate-500">
-                Tip: add tasks after creating a project, then assign peers on the Tasks page.
-              </p>
+              <>
+                <p className="mt-2 text-xs text-slate-500">
+                  Archived projects are hidden by default. Use &quot;Show archived
+                  only&quot; to find and restore them.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowArchived(true)}
+                  className="mt-4 text-sm text-cyan-400 hover:text-cyan-300"
+                >
+                  Check archived projects →
+                </button>
+              </>
             )}
           </div>
         ) : (
@@ -154,6 +236,7 @@ export function ProjectManager() {
               const done = project.tasks.filter((task) => task.status === "DONE").length;
               const total = project.tasks.length;
               const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+              const isMine = project.owner.id === currentUserId;
 
               return (
                 <article
@@ -163,7 +246,10 @@ export function ProjectManager() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-medium text-white">{project.title}</h3>
-                      <p className="text-sm text-slate-400">Owner: {project.owner.name}</p>
+                      <p className="text-sm text-slate-400">
+                        Owner: {project.owner.name}
+                        {isMine ? " (you)" : ""}
+                      </p>
                       {project.description && (
                         <p className="mt-2 text-sm text-slate-300">{project.description}</p>
                       )}
@@ -204,13 +290,15 @@ export function ProjectManager() {
                         View tasks →
                       </Link>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => archiveProject(project.id, !project.archived)}
-                      className="text-sm text-slate-400 hover:text-white"
-                    >
-                      {project.archived ? "Restore project" : "Archive project"}
-                    </button>
+                    {isMine ? (
+                      <button
+                        type="button"
+                        onClick={() => archiveProject(project.id, !project.archived)}
+                        className="text-sm text-slate-400 hover:text-white"
+                      >
+                        {project.archived ? "Restore project" : "Archive project"}
+                      </button>
+                    ) : null}
                   </div>
                 </article>
               );
