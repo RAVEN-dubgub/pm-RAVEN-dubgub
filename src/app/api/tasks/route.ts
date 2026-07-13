@@ -1,16 +1,18 @@
-import { TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listTasks, taskListInclude, type TaskListMode } from "@/lib/tasks";
+import { listTasks, taskListInclude, type TaskListMode, validateBlocker } from "@/lib/tasks";
 
 const taskSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(4000).optional(),
   status: z.nativeEnum(TaskStatus).optional(),
+  priority: z.nativeEnum(TaskPriority).optional(),
   projectId: z.string().min(1),
   assigneeId: z.string().optional().nullable(),
+  blockedById: z.string().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
 });
 
@@ -26,12 +28,17 @@ export async function GET(request: Request) {
   const projectId = searchParams.get("projectId") ?? undefined;
   const assigneeId = searchParams.get("assigneeId") ?? undefined;
   const statusParam = searchParams.get("status") as TaskStatus | null;
+  const priorityParam = searchParams.get("priority") as TaskPriority | null;
   const status =
     statusParam && Object.values(TaskStatus).includes(statusParam)
       ? statusParam
       : undefined;
+  const priority =
+    priorityParam && Object.values(TaskPriority).includes(priorityParam)
+      ? priorityParam
+      : undefined;
 
-  const tasks = await listTasks(mode, { projectId, assigneeId, status });
+  const tasks = await listTasks(mode, { projectId, assigneeId, status, priority });
 
   return NextResponse.json({ tasks });
 }
@@ -62,6 +69,15 @@ export async function POST(request: Request) {
     }
   }
 
+  const blockerError = await validateBlocker(
+    null,
+    parsed.data.blockedById ?? null,
+    parsed.data.projectId,
+  );
+  if (blockerError) {
+    return NextResponse.json({ error: blockerError }, { status: 400 });
+  }
+
   const dueDate = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null;
   const recentDuplicate = await prisma.task.findFirst({
     where: {
@@ -83,8 +99,10 @@ export async function POST(request: Request) {
       title: parsed.data.title,
       description: parsed.data.description,
       status: parsed.data.status ?? TaskStatus.TODO,
+      priority: parsed.data.priority ?? TaskPriority.MEDIUM,
       projectId: parsed.data.projectId,
       assigneeId: parsed.data.assigneeId ?? null,
+      blockedById: parsed.data.blockedById ?? null,
       dueDate,
     },
     include: taskListInclude,

@@ -18,6 +18,8 @@ export async function GET() {
     activeProjects,
     totalTasks,
     doneTasks,
+    todoTasks,
+    inProgressTasks,
     myOpenTasks,
     myDoneTasks,
     overdueTasks,
@@ -36,6 +38,12 @@ export async function GET() {
     prisma.task.count({ where: activeTaskWhere }),
     prisma.task.count({
       where: { status: "DONE", ...activeTaskWhere },
+    }),
+    prisma.task.count({
+      where: { status: "TODO", ...activeTaskWhere },
+    }),
+    prisma.task.count({
+      where: { status: "IN_PROGRESS", ...activeTaskWhere },
     }),
     prisma.task.count({
       where: {
@@ -226,5 +234,11 @@ export async function GET() {
     peerAssignedTasks,
     recentCompletions,
     onboarding,
+    tasksByStatus: {
+      todo: todoTasks,
+      inProgress: inProgressTasks,
+      done: doneTasks,
+      total: totalTasks,
+    },
   });
 }

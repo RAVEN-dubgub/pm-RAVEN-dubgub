@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { isSmokeUser } from "@/lib/smoke-users";
 
 type Project = {
   id: string;
   title: string;
   description: string | null;
   archived: boolean;
-  owner: { id?: string; name: string };
+  owner: { id?: string; name: string; email?: string };
   tasks: { status: string }[];
 };
 
@@ -254,13 +255,19 @@ export function ProjectManager({
               const total = project.tasks.length;
               const progress = total === 0 ? 0 : Math.round((done / total) * 100);
               const isMine = project.owner.id === currentUserId;
+              const isSmoke = isSmokeUser({
+                name: project.owner.name,
+                email: project.owner.email ?? "",
+              });
 
               const tasksHref = `/tasks?projectId=${project.id}`;
 
               return (
                 <article
                   key={project.id}
-                  className="group rounded-xl border border-slate-800 bg-slate-950/70 transition-colors hover:border-cyan-500/40 hover:bg-slate-900/90 has-[:focus-visible]:border-cyan-500/50"
+                  className={`group rounded-xl border bg-slate-950/70 transition-colors hover:border-cyan-500/40 hover:bg-slate-900/90 has-[:focus-visible]:border-cyan-500/50 ${
+                    isSmoke ? "border-slate-800/60 opacity-70" : "border-slate-800"
+                  }`}
                 >
                   <Link
                     href={tasksHref}
@@ -275,6 +282,7 @@ export function ProjectManager({
                         <p className="text-sm text-slate-400">
                           Owner: {project.owner.name}
                           {isMine ? " (you)" : ""}
+                          {isSmoke ? " · test account" : ""}
                         </p>
                         {project.description && (
                           <p className="mt-2 text-sm text-slate-300">{project.description}</p>

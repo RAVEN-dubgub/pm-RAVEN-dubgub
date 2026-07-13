@@ -1,16 +1,18 @@
-import { TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { taskListInclude } from "@/lib/tasks";
+import { taskListInclude, validateBlocker } from "@/lib/tasks";
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(4000).optional().nullable(),
   status: z.nativeEnum(TaskStatus).optional(),
+  priority: z.nativeEnum(TaskPriority).optional(),
   archived: z.boolean().optional(),
   assigneeId: z.string().optional().nullable(),
+  blockedById: z.string().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
 });
 
@@ -39,6 +41,17 @@ export async function PATCH(request: Request, context: RouteContext) {
   const existing = await prisma.task.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  if (parsed.data.blockedById !== undefined) {
+    const blockerError = await validateBlocker(
+      id,
+      parsed.data.blockedById,
+      existing.projectId,
+    );
+    if (blockerError) {
+      return NextResponse.json({ error: blockerError }, { status: 400 });
+    }
   }
 
   const task = await prisma.task.update({

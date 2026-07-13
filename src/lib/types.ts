@@ -1,4 +1,4 @@
-import type { TaskStatus } from "@prisma/client";
+import type { TaskPriority, TaskStatus } from "@prisma/client";
 
 export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
   { value: "TODO", label: "To do" },
@@ -6,8 +6,18 @@ export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
   { value: "DONE", label: "Done" },
 ];
 
+export const TASK_PRIORITIES: { value: TaskPriority; label: string }[] = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
+];
+
 export function statusLabel(status: TaskStatus) {
   return TASK_STATUSES.find((item) => item.value === status)?.label ?? status;
+}
+
+export function priorityLabel(priority: TaskPriority) {
+  return TASK_PRIORITIES.find((item) => item.value === priority)?.label ?? priority;
 }
 
 export function statusColorClass(status: TaskStatus) {
@@ -21,6 +31,25 @@ export function statusColorClass(status: TaskStatus) {
     default:
       return "bg-slate-700 text-slate-200";
   }
+}
+
+export function priorityColorClass(priority: TaskPriority) {
+  switch (priority) {
+    case "LOW":
+      return "bg-emerald-500/20 text-emerald-300";
+    case "MEDIUM":
+      return "bg-amber-500/20 text-amber-300";
+    case "HIGH":
+      return "bg-rose-500/20 text-rose-300";
+    default:
+      return "bg-slate-700 text-slate-200";
+  }
+}
+
+export function isTaskBlocked(
+  blockedBy: { status: TaskStatus } | null | undefined,
+) {
+  return Boolean(blockedBy && blockedBy.status !== "DONE");
 }
 
 export function isOverdue(dueDate: string | Date | null, status: TaskStatus) {

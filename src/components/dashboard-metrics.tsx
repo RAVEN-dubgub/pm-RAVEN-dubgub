@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HowToUse } from "@/components/how-to-use";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { formatDueDate, isOverdue, statusLabel } from "@/lib/types";
 
@@ -64,6 +65,59 @@ type Onboarding = {
   totalSteps: number;
 };
 
+type TasksByStatus = {
+  todo: number;
+  inProgress: number;
+  done: number;
+  total: number;
+};
+
+function StatusChart({ data }: { data: TasksByStatus }) {
+  const segments = [
+    { key: "todo", label: "To do", count: data.todo, color: "bg-slate-500" },
+    { key: "inProgress", label: "In progress", count: data.inProgress, color: "bg-amber-500" },
+    { key: "done", label: "Done", count: data.done, color: "bg-emerald-500" },
+  ];
+  const max = Math.max(...segments.map((segment) => segment.count), 1);
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="flex h-4 overflow-hidden rounded-full bg-slate-800"
+        role="img"
+        aria-label={`Tasks by status: ${data.todo} to do, ${data.inProgress} in progress, ${data.done} done`}
+      >
+        {data.total > 0 &&
+          segments.map((segment) =>
+            segment.count > 0 ? (
+              <div
+                key={segment.key}
+                className={`${segment.color} transition-all`}
+                style={{ width: `${(segment.count / data.total) * 100}%` }}
+              />
+            ) : null,
+          )}
+      </div>
+      <ul className="space-y-3">
+        {segments.map((segment) => (
+          <li key={segment.key}>
+            <div className="mb-1 flex justify-between text-sm">
+              <span className="text-slate-300">{segment.label}</span>
+              <span className="tabular-nums text-slate-400">{segment.count}</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-800">
+              <div
+                className={`h-2 rounded-full ${segment.color} transition-all`}
+                style={{ width: `${(segment.count / max) * 100}%` }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function cohortMotivationCopy(
   rate: number,
   activeMembers: number,
@@ -110,6 +164,7 @@ export function DashboardMetrics() {
   const [peerAssignedTasks, setPeerAssignedTasks] = useState<PeerAssignedTask[]>([]);
   const [recentCompletions, setRecentCompletions] = useState<RecentCompletion[]>([]);
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
+  const [tasksByStatus, setTasksByStatus] = useState<TasksByStatus | null>(null);
 
   useEffect(() => {
     fetch("/api/metrics")
@@ -121,6 +176,7 @@ export function DashboardMetrics() {
         setPeerAssignedTasks(data.peerAssignedTasks ?? []);
         setRecentCompletions(data.recentCompletions ?? []);
         setOnboarding(data.onboarding);
+        setTasksByStatus(data.tasksByStatus ?? null);
       });
   }, []);
 
@@ -166,6 +222,8 @@ export function DashboardMetrics() {
 
   return (
     <div className="space-y-6">
+      <HowToUse />
+
       {onboarding && onboarding.completedSteps < onboarding.totalSteps && (
         <OnboardingChecklist {...onboarding} />
       )}
@@ -256,6 +314,28 @@ export function DashboardMetrics() {
           </p>
         </div>
       </section>
+
+      {tasksByStatus && (
+        <section
+          aria-labelledby="status-chart-heading"
+          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 id="status-chart-heading" className="text-lg font-semibold text-white">
+              Tasks by status
+            </h2>
+            <div className="flex gap-4 text-sm text-slate-400">
+              <span>
+                <span className="font-medium text-white">{metrics.completionRate}%</span> complete
+              </span>
+              <span>
+                <span className="font-medium text-rose-300">{metrics.overdueTasks}</span> overdue
+              </span>
+            </div>
+          </div>
+          <StatusChart data={tasksByStatus} />
+        </section>
+      )}
 
       <section
         aria-labelledby="your-contribution-heading"

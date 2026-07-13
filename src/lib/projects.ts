@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { deprioritizeSmoke } from "@/lib/smoke-users";
 
 export type ProjectListMode = "active" | "archived";
 
@@ -16,9 +17,10 @@ export function projectListWhere(mode: ProjectListMode) {
 }
 
 export async function listProjects(mode: ProjectListMode = "active") {
-  return prisma.project.findMany({
+  const projects = await prisma.project.findMany({
     where: projectListWhere(mode),
     include: projectListInclude,
     orderBy: { updatedAt: "desc" },
   });
+  return deprioritizeSmoke(projects);
 }
