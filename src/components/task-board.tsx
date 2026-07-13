@@ -27,17 +27,26 @@ type TaskBoardProps = {
   initialTasks: TaskItem[];
   initialUsers: UserOption[];
   initialProjects: ProjectOption[];
+  currentUserId: string;
+  initialProjectFilter?: string;
 };
+
+function assigneeLabel(user: UserOption, currentUserId: string) {
+  const name = user.name.trim() || user.email;
+  return user.id === currentUserId ? `${name} (you)` : name;
+}
 
 export function TaskBoard({
   initialTasks,
   initialUsers,
   initialProjects,
+  currentUserId,
+  initialProjectFilter = "",
 }: TaskBoardProps) {
   const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
   const users = initialUsers;
   const projects = initialProjects;
-  const [projectFilter, setProjectFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState(initialProjectFilter);
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -45,7 +54,9 @@ export function TaskBoard({
   const [listLoading, setListLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState(initialProjects[0]?.id ?? "");
+  const [projectId, setProjectId] = useState(
+    initialProjectFilter || initialProjects[0]?.id || "",
+  );
   const [assigneeId, setAssigneeId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
@@ -312,10 +323,13 @@ export function TaskBoard({
                 <option value="">Unassigned</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.name}
+                    {assigneeLabel(user, currentUserId)}
                   </option>
                 ))}
               </select>
+              <span className="mt-1 block text-xs text-slate-500">
+                For onboarding step 4, pick another member — not &ldquo;(you)&rdquo;.
+              </span>
             </label>
             <label>
               <span className="mb-1 block text-xs text-slate-400">Due date</span>
@@ -409,7 +423,7 @@ export function TaskBoard({
               <option value="">All assignees</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name}
+                  {assigneeLabel(user, currentUserId)}
                 </option>
               ))}
             </select>
@@ -552,7 +566,7 @@ export function TaskBoard({
                             <option value="">Unassigned</option>
                             {users.map((user) => (
                               <option key={user.id} value={user.id}>
-                                {user.name}
+                                {assigneeLabel(user, currentUserId)}
                               </option>
                             ))}
                           </select>

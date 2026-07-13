@@ -17,12 +17,19 @@ function serializeTask(
   };
 }
 
-export default async function TasksPage() {
+type TasksPageProps = {
+  searchParams: Promise<{ projectId?: string; project?: string }>;
+};
+
+export default async function TasksPage({ searchParams }: TasksPageProps) {
   const user = await requireUser();
   if (!user) redirect("/login");
 
+  const params = await searchParams;
+  const projectFilter = params.projectId ?? params.project ?? "";
+
   const [tasks, users, projects] = await Promise.all([
-    listTasks("active"),
+    listTasks("active", projectFilter ? { projectId: projectFilter } : undefined),
     listUsers(),
     listProjects("active"),
   ]);
@@ -42,6 +49,8 @@ export default async function TasksPage() {
           id: project.id,
           title: project.title,
         }))}
+        currentUserId={user.id}
+        initialProjectFilter={projectFilter}
       />
     </AppShell>
   );

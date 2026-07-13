@@ -255,68 +255,74 @@ export function ProjectManager({
               const progress = total === 0 ? 0 : Math.round((done / total) * 100);
               const isMine = project.owner.id === currentUserId;
 
+              const tasksHref = `/tasks?projectId=${project.id}`;
+
               return (
                 <article
                   key={project.id}
-                  className="rounded-xl border border-slate-800 bg-slate-950/70 p-4"
+                  className="group rounded-xl border border-slate-800 bg-slate-950/70 transition-colors hover:border-cyan-500/40 hover:bg-slate-900/90 has-[:focus-visible]:border-cyan-500/50"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-medium text-white">{project.title}</h3>
-                      <p className="text-sm text-slate-400">
-                        Owner: {project.owner.name}
-                        {isMine ? " (you)" : ""}
-                      </p>
-                      {project.description && (
-                        <p className="mt-2 text-sm text-slate-300">{project.description}</p>
-                      )}
+                  <Link
+                    href={tasksHref}
+                    className="block cursor-pointer rounded-xl p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                    aria-label={`Open ${project.title}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-medium text-white group-hover:text-cyan-50">
+                          {project.title}
+                        </h3>
+                        <p className="text-sm text-slate-400">
+                          Owner: {project.owner.name}
+                          {isMine ? " (you)" : ""}
+                        </p>
+                        {project.description && (
+                          <p className="mt-2 text-sm text-slate-300">{project.description}</p>
+                        )}
+                      </div>
+                      {project.archived ? (
+                        <span className="shrink-0 rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-400">
+                          Archived
+                        </span>
+                      ) : null}
                     </div>
-                    {project.archived ? (
-                      <span className="shrink-0 rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-400">
-                        Archived
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-4">
-                    <div className="mb-1 flex justify-between text-xs text-slate-400">
-                      <span>
-                        {done}/{total} tasks done
-                      </span>
-                      <span>{progress}%</span>
-                    </div>
-                    <div
-                      className="h-2 rounded-full bg-slate-800"
-                      role="progressbar"
-                      aria-valuenow={progress}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${project.title} completion`}
-                    >
+                    <div className="mt-4">
+                      <div className="mb-1 flex justify-between text-xs text-slate-400">
+                        <span>
+                          {done}/{total} tasks done
+                        </span>
+                        <span>{progress}%</span>
+                      </div>
                       <div
-                        className="h-2 rounded-full bg-cyan-500 transition-all"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {!project.archived && total > 0 && (
-                      <Link
-                        href="/tasks"
-                        className="text-sm text-cyan-400 hover:text-cyan-300"
+                        className="h-2 rounded-full bg-slate-800"
+                        role="progressbar"
+                        aria-valuenow={progress}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${project.title} completion`}
                       >
-                        View tasks →
-                      </Link>
-                    )}
-                    {isMine ? (
+                        <div
+                          className="h-2 rounded-full bg-cyan-500 transition-all"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                  {isMine ? (
+                    <div className="border-t border-slate-800/80 px-4 pb-4 pt-2">
                       <button
                         type="button"
-                        onClick={() => archiveProject(project.id, !project.archived)}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void archiveProject(project.id, !project.archived);
+                        }}
                         className="text-sm text-slate-400 hover:text-white"
                       >
                         {project.archived ? "Restore project" : "Archive project"}
                       </button>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
