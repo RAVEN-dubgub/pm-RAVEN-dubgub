@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cohort PM Platform — RAVEN-dubgub
 
-## Getting Started
+Hult Cohort Developer Program · **Week 1 · Project 1** submission.
 
-First, run the development server:
+Production project management platform for the cohort: projects, tasks, assignments, filters, and a motivation-focused progress dashboard.
+
+## Production URL
+
+> **Deploy this repo to Vercel and paste your live URL here before opening the submission PR.**
+
+`https://YOUR-VERCEL-URL.vercel.app`
+
+## Quick start (local)
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL database ([Neon](https://neon.tech) free tier works)
+
+### Setup
 
 ```bash
+npm install
+cp .env.example .env
+# Edit .env with DATABASE_URL and AUTH_SECRET
+npx prisma migrate deploy
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 → **Sign up** → create a project → add tasks → assign peers.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Signup for reviewers
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open registration is enabled. Peers sign up with any email/password (min 8 chars). For staff smoke-test during review week, create:
 
-## Learn More
+- Email: `staff-review@hult-cohort.test`
+- Password: set in `#setup-verification` on Discord during review week
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+Browser (Next.js App Router)
+  → API routes (/api/auth, /api/projects, /api/tasks, /api/metrics)
+  → Prisma ORM
+  → PostgreSQL (Neon / Vercel Postgres)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+┌─────────────┐     HTTPS      ┌──────────────────┐
+│   Browser   │ ─────────────► │  Next.js (Vercel) │
+└─────────────┘                │  JWT session      │
+                               └────────┬─────────┘
+                                        │
+                               ┌────────▼─────────┐
+                               │   PostgreSQL    │
+                               │ users/projects/ │
+                               │     tasks       │
+                               └─────────────────┘
+```
 
-## Deploy on Vercel
+### Data model
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Entity | Fields |
+|--------|--------|
+| **User** | email, name, password hash |
+| **Project** | title, description, archived, owner |
+| **Task** | title, description, status (todo/in progress/done), assignee, due date, project |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Baseline features (rubric)
+
+- [x] Projects — create, edit, archive; ≥1 per user
+- [x] Tasks — title, description, status, assignee
+- [x] Status workflow — todo / in progress / done
+- [x] Assignment — assign to any cohort member by account
+- [x] Multi-user auth — email + password; supports 30+ accounts
+- [x] Task list views — filter by project, assignee, status
+- [x] HTTPS deployment — Vercel-ready
+
+## Differentiating features
+
+- [x] Due dates on tasks
+- [x] Cohort metrics dashboard (completion %, next actions, overdue count)
+- [x] Progress bars per project
+- [x] Mobile-responsive layout
+
+## Motivation / engagement design
+
+- **Cohort snapshot** dashboard shows completion rate and shipped tasks — social proof that the cohort is moving.
+- **Next actions** panel surfaces your top 5 open assignments so you always know what to do now.
+- **Per-project progress bars** make partial wins visible before everything is done.
+- **Overdue counter** creates gentle urgency without nag emails.
+
+## Deploy (Vercel)
+
+1. Push this repo to GitHub (`pm-RAVEN-dubgub`, public, MIT).
+2. Import in [Vercel](https://vercel.com/new).
+3. Add environment variables:
+   - `DATABASE_URL` — Neon pooled connection string
+   - `AUTH_SECRET` — random 32+ char string (`openssl rand -base64 32`)
+4. Deploy, then run migrations against production DB:
+   ```bash
+   DATABASE_URL="your-prod-url" npx prisma migrate deploy
+   ```
+5. Verify signup → project → task → assign flow on the live URL.
+
+## Known limitations
+
+- Email/password only (no OAuth yet)
+- No in-app notifications or comments (due dates + dashboard only)
+- No GitHub issue linking (stretch for later weeks)
+- Requires manual `prisma migrate deploy` after first Vercel deploy
+
+## Agent usage summary
+
+Built with **Cursor Agent** (Claude):
+
+- Researched requirements from `rogerSuperBuilderAlpha/hult-cohort-program` curriculum
+- Scaffolded Next.js + Prisma + PostgreSQL stack
+- Implemented auth, CRUD APIs, dashboard, and submission docs
+- Human must: create Neon DB, deploy to Vercel, open submission PR to cohort org
+
+## Submission
+
+| Item | Value |
+|------|-------|
+| Repo | `hult-cohort-fall26-boston/pm-RAVEN-dubgub` (or your fork until org invite) |
+| PR title | `[Project 1] Submission - RAVEN-dubgub` |
+| Deadline | **Sunday Jul 19, 2026 · 17:00 ET** — PR merged to `main` |
+| Platform page | https://site-nine-rouge-68.vercel.app/program/phase-1-project-1 |
+
+PR body must include: Production URL, setup steps, architecture summary, motivation notes, known limitations, agent usage.
+
+## License
+
+MIT

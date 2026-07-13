@@ -1,0 +1,23 @@
+import { redirect } from "next/navigation";
+import { AppShell } from "@/components/app-shell";
+import { TaskBoard } from "@/components/task-board";
+import { requireUser } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export default async function TasksPage() {
+  const user = await requireUser();
+  if (!user) redirect("/login");
+
+  return (
+    <AppShell userName={user.name}>
+      <div className="mb-6">
+        <h1 className="text-3xl font-semibold text-white">Tasks</h1>
+        <p className="mt-2 text-slate-400">
+          Create, assign, and filter tasks across the cohort.
+        </p>
+      </div>
+      <TaskBoard />
+    </AppShell>
+  );
+}
