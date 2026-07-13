@@ -2,6 +2,8 @@
 
 Hult Cohort Developer Program · **Week 1 · Project 1** submission.
 
+**Purpose:** motivate cohort work through visible progress and peer assignment — not solo task tracking. The dashboard shows cohort-wide completion, who is actively shipping, recent wins, and tasks peers assigned to you so accountability stays social.
+
 Production project management platform for the cohort: projects, tasks, assignments, filters, and a motivation-focused progress dashboard.
 
 ## Production URL
@@ -64,17 +66,39 @@ Browser (Next.js App Router)
 |--------|--------|
 | **User** | email, name, password hash |
 | **Project** | title, description, archived, owner |
-| **Task** | title, description, status (todo/in progress/done), assignee, due date, project |
+| **Task** | title, description, status, **priority**, assignee, due date, **blockedBy**, project |
+
+## Grader test instructions
+
+1. Open **https://pm-raven-dubgub.vercel.app** → Sign up (or log in).
+2. **Dashboard** → expand **How to use this app**; confirm chart shows tasks by status.
+3. **Projects** → create a project → open it via card link (filters Tasks by `projectId`).
+4. **Tasks** → create task with **High** priority and assign to another user (not “(you)”).
+5. Create a second task → set **Blocked by** the first → confirm **Blocked** badge until first is Done.
+6. Toggle **Board** view → change status via dropdown on a card → column updates.
+7. Filter by **Priority: High** → only high-priority tasks show.
+8. Archive a task → enable **Show archived only** → restore.
+
+Staff smoke account (`staff-review@hult-cohort.test`) projects appear muted at the bottom of the project list.
 
 ## Baseline features (rubric)
 
 - [x] Projects — create, edit, archive; ≥1 per user
-- [x] Tasks — title, description, status, assignee
+- [x] Tasks — title, description, status, assignee, **priority**, **blockers**
 - [x] Status workflow — todo / in progress / done
-- [x] Assignment — assign to any cohort member by account
+- [x] Assignment — assign to any cohort member by account (dropdown labels peers vs **(you)**)
 - [x] Multi-user auth — email + password; supports 30+ accounts
-- [x] Task list views — filter by project, assignee, status
+- [x] Task list views — filter by project, assignee, status, **priority**; **List | Board** kanban toggle
 - [x] HTTPS deployment — Vercel-ready
+
+## Tier 1 features (Jul 2026)
+
+- [x] **Priority** — Low / Medium / High on create & edit; color badges; filter on Tasks page
+- [x] **Kanban board** — Board view with To do / In progress / Done columns; click status to move; horizontal scroll on mobile
+- [x] **Task blockers** — optional “Blocked by” (same project); **Blocked** badge until blocker is Done; circular deps rejected
+- [x] **Dashboard chart** — tasks-by-status bar chart + completion % + overdue count (CSS, no chart library)
+- [x] **In-app help** — collapsible “How to use” on Dashboard (create project → task → assign peer → archive vs delete)
+- [x] Smoke/test projects de-emphasized in default project list (sorted last, muted styling)
 
 ## Differentiating features
 
@@ -85,13 +109,16 @@ Browser (Next.js App Router)
 
 ## Motivation / engagement design
 
-Research-backed UX (progress visibility, onboarding checklists, overdue signals):
+Research-backed UX (progress visibility, peer accountability, onboarding checklists):
 
-- **Onboarding checklist** — 4-step setup guide for new cohort members (project → task → assign)
-- **Hero cohort completion bar** — large progress metric with contextual motivation copy
-- **Overdue alert banner** — gentle urgency on dashboard and task cards
+- **Cohort momentum hero** — cohort-wide completion %, active members, motivating copy
+- **Your contribution panel** — personal tasks shipped + share of cohort completions
+- **Peer accountability** — "From [name]" badges on peer-assigned tasks; dashboard nudge for unstarted peer work
+- **Recent cohort wins** — live feed of tasks the team just completed
+- **Onboarding checklist** — 4-step setup guide for new cohort members (project → task → assign peer)
+- **Overdue alert banner** — framed as helping the cohort stay on track
 - **Project momentum panel** — per-project progress bars on the dashboard
-- **Next actions** — top 5 open assignments sorted by due date
+- **Next actions** — top 5 open assignments sorted by due date, with peer source when applicable
 - **Status pills + due-soon badges** — clearer task scanning
 - **Empty states with CTAs** — no blank walls when projects/tasks are missing
 - **Mobile nav** — bottom tab bar + collapsible menu for small screens

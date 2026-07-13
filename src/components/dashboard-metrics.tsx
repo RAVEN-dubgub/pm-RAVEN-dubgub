@@ -12,8 +12,13 @@ type Metrics = {
   doneTasks: number;
   completionRate: number;
   myOpenTasks: number;
+  myDoneTasks: number;
+  myContributionPercent: number;
   overdueTasks: number;
   cohortMembers: number;
+  activeMembers: number;
+  peersWithOpenTasks: number;
+  peerAssignedUnstarted: number;
 };
 
 type ProjectProgress = {
@@ -30,30 +35,80 @@ type NextAction = {
   status: "TODO" | "IN_PROGRESS" | "DONE";
   project: { title: string };
   dueDate: string | null;
+  fromPeer: { id: string; name: string } | null;
+};
+
+type PeerAssignedTask = {
+  id: string;
+  title: string;
+  status: "TODO" | "IN_PROGRESS" | "DONE";
+  dueDate: string | null;
+  projectTitle: string;
+  fromName: string;
+};
+
+type RecentCompletion = {
+  id: string;
+  title: string;
+  projectTitle: string;
+  assigneeName: string;
+  completedAt: string;
 };
 
 type Onboarding = {
   hasProject: boolean;
   hasTask: boolean;
   hasAssignment: boolean;
+  otherCohortMembers?: number;
   completedSteps: number;
   totalSteps: number;
 };
 
-function motivationMessage(rate: number, overdue: number) {
-  if (overdue > 0) {
-    return `${overdue} task${overdue === 1 ? "" : "s"} past due — knock ${overdue === 1 ? "it" : "them"} out to get the cohort back on track.`;
+function cohortMotivationCopy(
+  rate: number,
+  activeMembers: number,
+  peersWithOpenTasks: number,
+) {
+  if (rate >= 80) {
+    return "The cohort is crushing it — keep shipping together.";
   }
-  if (rate >= 80) return "The cohort is crushing it. Keep the momentum going!";
-  if (rate >= 50) return "Halfway there — every completed task lifts the whole team.";
-  if (rate > 0) return "Progress is visible. Ship one more task today.";
-  return "Be the first to ship — create a project and add tasks.";
+  if (rate >= 50) {
+    return "Halfway there. Every task you finish lifts the whole team.";
+  }
+  if (rate > 0) {
+    return "Progress is visible. Ship one more task today and pull the cohort forward.";
+  }
+  if (activeMembers > 1) {
+    return `${activeMembers} members are in motion — be the spark that gets tasks moving.`;
+  }
+  if (peersWithOpenTasks > 0) {
+    return `${peersWithOpenTasks} peer${peersWithOpenTasks === 1 ? "" : "s"} have open work — your turn to contribute.`;
+  }
+  return "Be the first to ship — create a project and invite the cohort in.";
+}
+
+function overdueCohortNudge(overdue: number) {
+  if (overdue === 0) return null;
+  return `${overdue} overdue task${overdue === 1 ? "" : "s"} on your plate — clearing ${overdue === 1 ? "it" : "them"} helps the cohort stay on track.`;
+}
+
+function formatRelativeTime(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 }
 
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [projectProgress, setProjectProgress] = useState<ProjectProgress[]>([]);
   const [nextActions, setNextActions] = useState<NextAction[]>([]);
+  const [peerAssignedTasks, setPeerAssignedTasks] = useState<PeerAssignedTask[]>([]);
+  const [recentCompletions, setRecentCompletions] = useState<RecentCompletion[]>([]);
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
   useEffect(() => {
@@ -62,7 +117,9 @@ export function DashboardMetrics() {
       .then((data) => {
         setMetrics(data.metrics);
         setProjectProgress(data.projectProgress ?? []);
-        setNextActions(data.nextActions);
+        setNextActions(data.nextActions ?? []);
+        setPeerAssignedTasks(data.peerAssignedTasks ?? []);
+        setRecentCompletions(data.recentCompletions ?? []);
         setOnboarding(data.onboarding);
       });
   }, []);
@@ -70,7 +127,7 @@ export function DashboardMetrics() {
   if (!metrics) {
     return (
       <div className="space-y-4" aria-live="polite" aria-busy="true">
-        <div className="h-32 animate-pulse rounded-2xl bg-slate-900" />
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-900" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-900" />
@@ -80,20 +137,30 @@ export function DashboardMetrics() {
     );
   }
 
+  const overdueNudge = overdueCohortNudge(metrics.overdueTasks);
+
   const cards = [
-    { label: "Active projects", value: metrics.activeProjects, hint: "across cohort" },
+    {
+      label: "Active members",
+      value: metrics.activeMembers,
+      hint: "with open assigned tasks",
+    },
+    {
+      label: "Peers with open work",
+      value: metrics.peersWithOpenTasks,
+      hint: "counting others in cohort",
+    },
     { label: "Your open tasks", value: metrics.myOpenTasks, hint: "assigned to you" },
     {
       label: "Overdue",
       value: metrics.overdueTasks,
-      hint: "need attention",
+      hint: "blocking cohort momentum",
       alert: metrics.overdueTasks > 0,
     },
-    { label: "Cohort members", value: metrics.cohortMembers, hint: "signed up" },
     {
       label: "Tasks shipped",
       value: `${metrics.doneTasks}/${metrics.totalTasks}`,
-      hint: "done / total",
+      hint: "cohort-wide done / total",
     },
   ];
 
@@ -103,15 +170,33 @@ export function DashboardMetrics() {
         <OnboardingChecklist {...onboarding} />
       )}
 
-      {metrics.overdueTasks > 0 && (
+      {metrics.peerAssignedUnstarted > 0 && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/40 bg-cyan-950/30 px-4 py-3"
+        >
+          <p className="text-sm text-cyan-100">
+            <span className="font-semibold text-cyan-200">
+              {metrics.peerAssignedUnstarted} peer-assigned task
+              {metrics.peerAssignedUnstarted === 1 ? "" : "s"}
+            </span>
+            {" "}waiting on you — a cohort mate is counting on your follow-through.
+          </p>
+          <Link
+            href="/tasks"
+            className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30"
+          >
+            Start now
+          </Link>
+        </div>
+      )}
+
+      {overdueNudge && (
         <div
           role="alert"
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3"
         >
-          <p className="text-sm text-rose-200">
-            <span className="font-semibold">{metrics.overdueTasks} overdue task{metrics.overdueTasks === 1 ? "" : "s"}</span>
-            {" "}assigned to you — update status or adjust due dates.
-          </p>
+          <p className="text-sm text-rose-200">{overdueNudge}</p>
           <Link
             href="/tasks"
             className="rounded-lg bg-rose-500/20 px-3 py-1.5 text-sm font-medium text-rose-200 hover:bg-rose-500/30"
@@ -122,24 +207,37 @@ export function DashboardMetrics() {
       )}
 
       <section
-        aria-labelledby="cohort-progress-heading"
-        className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6"
+        aria-labelledby="cohort-momentum-heading"
+        className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-950/50 via-slate-900 to-slate-950 p-6"
       >
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 id="cohort-progress-heading" className="text-lg font-semibold text-white">
-              Cohort completion
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <p className="text-xs font-medium uppercase tracking-wider text-cyan-400/80">
+              Cohort momentum
+            </p>
+            <h2 id="cohort-momentum-heading" className="mt-1 text-xl font-semibold text-white">
+              {metrics.completionRate}% of cohort tasks complete
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              {motivationMessage(metrics.completionRate, metrics.overdueTasks)}
+            <p className="mt-2 text-sm text-slate-300">
+              {cohortMotivationCopy(
+                metrics.completionRate,
+                metrics.activeMembers,
+                metrics.peersWithOpenTasks,
+              )}
+            </p>
+            <p className="mt-3 text-sm text-slate-400">
+              <span className="font-medium text-white">{metrics.activeMembers}</span> active member
+              {metrics.activeMembers === 1 ? "" : "s"}
+              {" · "}
+              <span className="font-medium text-white">{metrics.cohortMembers}</span> signed up
             </p>
           </div>
-          <p className="text-4xl font-bold tabular-nums text-cyan-400">
+          <p className="text-5xl font-bold tabular-nums text-cyan-400">
             {metrics.completionRate}
             <span className="text-2xl text-slate-400">%</span>
           </p>
         </div>
-        <div className="mt-4">
+        <div className="mt-5">
           <div
             className="h-3 rounded-full bg-slate-800"
             role="progressbar"
@@ -154,12 +252,42 @@ export function DashboardMetrics() {
             />
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            {metrics.doneTasks} of {metrics.totalTasks} tasks marked done
+            {metrics.doneTasks} of {metrics.totalTasks} tasks marked done across the cohort
           </p>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Key metrics">
+      <section
+        aria-labelledby="your-contribution-heading"
+        className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-5"
+      >
+        <h2 id="your-contribution-heading" className="text-lg font-semibold text-white">
+          Your contribution
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Your completed work is part of what the whole cohort sees moving forward.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+            <p className="text-sm text-slate-400">Tasks you&apos;ve shipped</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums text-emerald-300">
+              {metrics.myDoneTasks}
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+            <p className="text-sm text-slate-400">Share of cohort completions</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums text-cyan-300">
+              {metrics.myContributionPercent}
+              <span className="text-lg text-slate-400">%</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {metrics.myDoneTasks} of {metrics.doneTasks} cohort tasks done
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Cohort activity">
         {cards.map((card) => (
           <div
             key={card.label}
@@ -181,6 +309,99 @@ export function DashboardMetrics() {
           </div>
         ))}
       </section>
+
+      {recentCompletions.length > 0 && (
+        <section
+          aria-labelledby="recent-ships-heading"
+          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+        >
+          <h2 id="recent-ships-heading" className="text-lg font-semibold text-white">
+            Recent cohort wins
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Tasks the cohort just shipped — momentum you can see.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {recentCompletions.map((item) => (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm"
+              >
+                <div>
+                  <p className="font-medium text-white">{item.title}</p>
+                  <p className="text-slate-400">
+                    {item.assigneeName} · {item.projectTitle}
+                  </p>
+                </div>
+                <span className="text-xs text-slate-500">
+                  {formatRelativeTime(item.completedAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {peerAssignedTasks.length > 0 && (
+        <section
+          aria-labelledby="peer-accountability-heading"
+          className="rounded-2xl border border-cyan-500/20 bg-slate-900/60 p-5"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 id="peer-accountability-heading" className="text-lg font-semibold text-white">
+                From your cohort
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Tasks peers assigned to you — follow through so the team keeps moving.
+              </p>
+            </div>
+            <Link href="/tasks" className="text-sm text-cyan-400 hover:text-cyan-300">
+              All tasks →
+            </Link>
+          </div>
+          <ul className="space-y-3">
+            {peerAssignedTasks.map((task) => {
+              const overdue = isOverdue(task.dueDate, task.status);
+              return (
+                <li
+                  key={task.id}
+                  className={`rounded-xl border px-4 py-3 ${
+                    overdue
+                      ? "border-rose-500/40 bg-rose-950/20"
+                      : task.status === "TODO"
+                        ? "border-cyan-500/30 bg-cyan-950/20"
+                        : "border-slate-800 bg-slate-950/70"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-white">{task.title}</p>
+                      <p className="text-sm text-cyan-300/90">
+                        From {task.fromName}
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        {task.projectTitle} · {statusLabel(task.status)}
+                        {task.dueDate ? ` · Due ${formatDueDate(task.dueDate)}` : ""}
+                      </p>
+                    </div>
+                    {task.status === "TODO" && (
+                      <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-300">
+                        Not started
+                      </span>
+                    )}
+                    {overdue && (
+                      <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-xs font-medium text-rose-300">
+                        Overdue
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {projectProgress.length > 0 && (
         <section
@@ -237,13 +458,15 @@ export function DashboardMetrics() {
         </div>
         {nextActions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/50 px-4 py-8 text-center">
-            <p className="text-sm text-slate-400">No open tasks assigned to you.</p>
+            <p className="text-sm text-slate-400">
+              No open tasks assigned to you — pick something up for the cohort.
+            </p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               <Link
                 href="/tasks"
                 className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
               >
-                Create a task
+                Browse tasks
               </Link>
               <Link
                 href="/projects"
@@ -274,6 +497,9 @@ export function DashboardMetrics() {
                       </span>
                     )}
                   </div>
+                  {task.fromPeer && (
+                    <p className="text-sm text-cyan-300/90">From {task.fromPeer.name}</p>
+                  )}
                   <p className="text-sm text-slate-400">
                     {task.project.title} · {statusLabel(task.status)}
                     {task.dueDate ? ` · Due ${formatDueDate(task.dueDate)}` : ""}

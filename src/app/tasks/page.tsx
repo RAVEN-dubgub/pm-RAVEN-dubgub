@@ -37,9 +37,9 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   return (
     <AppShell userName={user.name}>
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-white">Tasks</h1>
+        <h1 className="text-3xl font-semibold text-white">Cohort tasks</h1>
         <p className="mt-2 text-slate-400">
-          Create, assign, and filter tasks across the cohort.
+          Create work, assign peers, and track what the cohort is shipping together.
         </p>
       </div>
       <TaskBoard

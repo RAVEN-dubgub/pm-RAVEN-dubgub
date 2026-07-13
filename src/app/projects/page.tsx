@@ -15,9 +15,9 @@ export default async function ProjectsPage() {
   return (
     <AppShell userName={user.name}>
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-white">Projects</h1>
+        <h1 className="text-3xl font-semibold text-white">Cohort projects</h1>
         <p className="mt-2 text-slate-400">
-          Every participant needs at least one project. Archive when done.
+          Shared workspaces where the cohort plans and ships work together.
         </p>
       </div>
       <ProjectManager

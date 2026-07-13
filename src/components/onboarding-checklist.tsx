@@ -6,6 +6,7 @@ type OnboardingProps = {
   hasProject: boolean;
   hasTask: boolean;
   hasAssignment: boolean;
+  otherCohortMembers?: number;
   completedSteps: number;
   totalSteps: number;
 };
@@ -16,22 +17,32 @@ const STEPS = [
   { key: "task", label: "Add your first task", href: "/tasks", check: "hasTask" as const },
   {
     key: "assign",
-    label: "Assign a task to a cohort peer",
+    label: "Assign a task to another cohort member",
     href: "/tasks",
     check: "hasAssignment" as const,
   },
 ];
 
+function step4Hint(hasTask: boolean, hasAssignment: boolean, otherCohortMembers: number) {
+  if (hasAssignment || !hasTask) return null;
+  if (otherCohortMembers === 0) {
+    return "Ask a cohort peer to sign up, then assign one of your tasks to them (not yourself).";
+  }
+  return `On Tasks, change a task's Assignee to someone else — ${otherCohortMembers} other member${otherCohortMembers === 1 ? "" : "s"} are registered. Assigning to yourself does not count.`;
+}
+
 export function OnboardingChecklist({
   hasProject,
   hasTask,
   hasAssignment,
+  otherCohortMembers = 0,
   completedSteps,
   totalSteps,
 }: OnboardingProps) {
   const checks = { hasProject, hasTask, hasAssignment };
   const progress = Math.round((completedSteps / totalSteps) * 100);
   const isComplete = completedSteps >= totalSteps;
+  const assignHint = step4Hint(hasTask, hasAssignment, otherCohortMembers);
 
   if (isComplete) return null;
 
@@ -43,10 +54,10 @@ export function OnboardingChecklist({
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="onboarding-heading" className="text-lg font-semibold text-white">
-            Get started in 4 steps
+            Join the cohort in 4 steps
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Complete this checklist to unlock the full cohort experience.
+            Set up your account so peers can assign you work and you can see cohort progress.
           </p>
         </div>
         <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-sm font-medium text-cyan-300">
@@ -115,6 +126,13 @@ export function OnboardingChecklist({
           );
         })}
       </ol>
+
+      {assignHint && (
+        <p className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/30 px-4 py-3 text-sm text-cyan-100/90">
+          <span className="font-medium text-cyan-200">Step 4: </span>
+          {assignHint}
+        </p>
+      )}
     </section>
   );
 }

@@ -11,7 +11,8 @@ import {
 } from "@/lib/types";
 
 type UserOption = { id: string; name: string; email: string };
-type ProjectOption = { id: string; title: string };
+type ProjectOwner = { id: string; name: string; email: string };
+type ProjectOption = { id: string; title: string; ownerId?: string; owner?: ProjectOwner };
 type TaskItem = {
   id: string;
   title: string;
@@ -19,7 +20,7 @@ type TaskItem = {
   status: "TODO" | "IN_PROGRESS" | "DONE";
   archived: boolean;
   dueDate: string | null;
-  project: { id: string; title: string };
+  project: { id: string; title: string; ownerId: string; owner: ProjectOwner };
   assignee: UserOption | null;
 };
 
@@ -34,6 +35,18 @@ type TaskBoardProps = {
 function assigneeLabel(user: UserOption, currentUserId: string) {
   const name = user.name.trim() || user.email;
   return user.id === currentUserId ? `${name} (you)` : name;
+}
+
+function isPeerAssigned(task: TaskItem, currentUserId: string) {
+  return (
+    task.assignee?.id === currentUserId &&
+    task.project.ownerId !== currentUserId
+  );
+}
+
+function peerFromLabel(task: TaskItem) {
+  const name = task.project.owner.name.trim() || task.project.owner.email;
+  return `From ${name}`;
 }
 
 export function TaskBoard({
@@ -504,6 +517,11 @@ export function TaskBoard({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-medium text-white">{task.title}</h3>
+                        {isPeerAssigned(task, currentUserId) && (
+                          <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-300">
+                            {peerFromLabel(task)}
+                          </span>
+                        )}
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColorClass(task.status)}`}
                         >

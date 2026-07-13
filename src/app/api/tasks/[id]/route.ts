@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { taskListInclude } from "@/lib/tasks";
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -51,10 +52,7 @@ export async function PATCH(request: Request, context: RouteContext) {
             ? new Date(parsed.data.dueDate)
             : null,
     },
-    include: {
-      project: { select: { id: true, title: true } },
-      assignee: { select: { id: true, name: true, email: true } },
-    },
+    include: taskListInclude,
   });
 
   return NextResponse.json({ task });

@@ -3,8 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export type TaskListMode = "active" | "archived";
 
-const taskListInclude = {
-  project: { select: { id: true, title: true } },
+export const taskListInclude = {
+  project: {
+    select: {
+      id: true,
+      title: true,
+      ownerId: true,
+      owner: { select: { id: true, name: true, email: true } },
+    },
+  },
   assignee: { select: { id: true, name: true, email: true } },
 } as const;
 

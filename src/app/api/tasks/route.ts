@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listTasks, type TaskListMode } from "@/lib/tasks";
+import { listTasks, taskListInclude, type TaskListMode } from "@/lib/tasks";
 
 const taskSchema = z.object({
   title: z.string().min(1).max(200),
@@ -72,10 +72,7 @@ export async function POST(request: Request) {
       dueDate,
       createdAt: { gte: new Date(Date.now() - 30_000) },
     },
-    include: {
-      project: { select: { id: true, title: true } },
-      assignee: { select: { id: true, name: true, email: true } },
-    },
+    include: taskListInclude,
   });
   if (recentDuplicate) {
     return NextResponse.json({ task: recentDuplicate });
@@ -90,10 +87,7 @@ export async function POST(request: Request) {
       assigneeId: parsed.data.assigneeId ?? null,
       dueDate,
     },
-    include: {
-      project: { select: { id: true, title: true } },
-      assignee: { select: { id: true, name: true, email: true } },
-    },
+    include: taskListInclude,
   });
 
   return NextResponse.json({ task }, { status: 201 });
