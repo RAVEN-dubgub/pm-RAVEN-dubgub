@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { HolographicRingHud } from "@/components/holographic-ring-hud";
 
 const STORAGE_KEY = "pm-holo-effects";
 
@@ -28,6 +29,7 @@ export function HolographicBackground() {
       <div className="holo-bg-mesh" />
       <div className="holo-bg-grid" />
       <div className="holo-bg-scanlines" />
+      <HolographicRingHud />
     </div>
   );
 }

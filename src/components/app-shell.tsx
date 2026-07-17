@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { HolographicThemeToggle } from "@/components/holographic-theme-toggle";
+import { dispatchHoloNavPick } from "@/lib/holo-route";
 
 type AppShellProps = {
   userName: string;
@@ -28,6 +29,10 @@ export function AppShell({ userName, children }: AppShellProps) {
     router.refresh();
   }
 
+  function onNavPick(href: string) {
+    dispatchHoloNavPick(href);
+  }
+
   return (
     <div className="min-h-screen">
       <a
@@ -39,7 +44,7 @@ export function AppShell({ userName, children }: AppShellProps) {
       <header className="holo-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div>
-            <Link href="/dashboard" className="holo-brand text-lg tracking-tight">
+            <Link href="/dashboard" className="holo-brand text-lg tracking-tight" onClick={() => onNavPick("/dashboard")}>
               Cohort PM
             </Link>
             <p className="hidden text-sm text-slate-400 sm:block">Ship together. Track everything.</p>
@@ -53,6 +58,7 @@ export function AppShell({ userName, children }: AppShellProps) {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
+                  onClick={() => onNavPick(link.href)}
                   className={`holo-nav-link ${active ? "holo-nav-active" : ""}`}
                 >
                   {link.label}
@@ -101,7 +107,10 @@ export function AppShell({ userName, children }: AppShellProps) {
                     <Link
                       href={link.href}
                       aria-current={active ? "page" : undefined}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => {
+                        onNavPick(link.href);
+                        setMenuOpen(false);
+                      }}
                       className={`block rounded-lg px-3 py-2 ${
                         active ? "holo-nav-active" : "text-slate-300 hover:bg-cyan-500/10"
                       }`}
@@ -139,6 +148,7 @@ export function AppShell({ userName, children }: AppShellProps) {
                 <Link
                   href={link.href}
                   aria-current={active ? "page" : undefined}
+                  onClick={() => onNavPick(link.href)}
                   className={`holo-bottom-nav-item ${active ? "holo-bottom-nav-item-active" : ""}`}
                 >
                   {link.label}

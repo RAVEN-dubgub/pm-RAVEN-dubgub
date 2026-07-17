@@ -97,6 +97,328 @@ body {
   opacity: 0.6;
 }
 
+/* ── Reactive holographic ring HUD ── */
+.holo-hud {
+  --hud-primary: #22d3ee;
+  --hud-secondary: #67e8f9;
+  --hud-glow: rgba(34, 211, 238, 0.55);
+  --hud-glow-soft: rgba(34, 211, 238, 0.18);
+  --hud-speed-1: 28s;
+  --hud-speed-2: 22s;
+  --hud-speed-3: 16s;
+  --hud-speed-4: 12s;
+  --hud-speed-5: 36s;
+
+  position: absolute;
+  bottom: -18%;
+  left: 50%;
+  width: min(92vw, 520px);
+  height: min(92vw, 520px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+.holo-hud[data-holo-route="dashboard"] {
+  --hud-primary: #22d3ee;
+  --hud-secondary: #06b6d4;
+  --hud-glow: rgba(34, 211, 238, 0.62);
+  --hud-glow-soft: rgba(34, 211, 238, 0.22);
+  --hud-speed-1: 24s;
+  --hud-speed-2: 18s;
+  --hud-speed-3: 13s;
+  --hud-speed-4: 9s;
+  --hud-speed-5: 30s;
+}
+
+.holo-hud[data-holo-route="projects"] {
+  --hud-primary: #e879f9;
+  --hud-secondary: #f472b6;
+  --hud-glow: rgba(232, 121, 249, 0.62);
+  --hud-glow-soft: rgba(244, 114, 182, 0.2);
+  --hud-speed-1: 18s;
+  --hud-speed-2: 14s;
+  --hud-speed-3: 10s;
+  --hud-speed-4: 7s;
+  --hud-speed-5: 22s;
+}
+
+.holo-hud[data-holo-route="tasks"] {
+  --hud-primary: #a78bfa;
+  --hud-secondary: #818cf8;
+  --hud-glow: rgba(167, 139, 250, 0.65);
+  --hud-glow-soft: rgba(129, 140, 248, 0.22);
+  --hud-speed-1: 14s;
+  --hud-speed-2: 11s;
+  --hud-speed-3: 8s;
+  --hud-speed-4: 5.5s;
+  --hud-speed-5: 18s;
+}
+
+.holo-hud[data-holo-route="login"],
+.holo-hud[data-holo-route="signup"] {
+  --hud-primary: #38bdf8;
+  --hud-secondary: #818cf8;
+  --hud-glow: rgba(56, 189, 248, 0.5);
+  --hud-glow-soft: rgba(129, 140, 248, 0.18);
+  --hud-speed-1: 32s;
+  --hud-speed-2: 26s;
+  --hud-speed-3: 20s;
+  --hud-speed-4: 15s;
+  --hud-speed-5: 40s;
+}
+
+.holo-hud[data-holo-route="default"] {
+  --hud-primary: #22d3ee;
+  --hud-secondary: #a78bfa;
+  --hud-glow: rgba(34, 211, 238, 0.45);
+  --hud-glow-soft: rgba(167, 139, 250, 0.15);
+}
+
+@media (min-width: 768px) {
+  .holo-hud {
+    bottom: -22%;
+    left: auto;
+    right: 2%;
+    width: min(42vw, 640px);
+    height: min(42vw, 640px);
+    transform: none;
+  }
+}
+
+.holo-hud-pedestal {
+  position: absolute;
+  inset: 18% 8% -8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    var(--hud-glow-soft) 0%,
+    transparent 68%
+  );
+  filter: blur(18px);
+  opacity: 0.85;
+}
+
+.holo-hud-perspective {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: perspective(900px) rotateX(68deg) rotateZ(-10deg);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.holo-hud-pulse .holo-hud-perspective {
+  animation: holo-hud-lock-on 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.holo-hud-pulse .holo-hud-core-glow {
+  animation: holo-hud-core-flare 0.95s ease-out;
+}
+
+.holo-hud-ring {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.holo-hud-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.holo-hud-stroke {
+  fill: none;
+  stroke: var(--hud-primary);
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px var(--hud-glow));
+}
+
+.holo-hud-stroke-dashed {
+  stroke-width: 1.5;
+  stroke-dasharray: 6 10;
+  opacity: 0.75;
+}
+
+.holo-hud-stroke-inner {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.holo-hud-stroke-segmented {
+  stroke-width: 2.5;
+  stroke-dasharray: 18 14 8 14;
+  opacity: 0.85;
+}
+
+.holo-hud-stroke-arc {
+  stroke-width: 3;
+  stroke-dasharray: 120 280;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.holo-hud-stroke-ticks {
+  stroke-width: 1;
+  stroke-dasharray: 2 18;
+  opacity: 0.45;
+  stroke: var(--hud-secondary);
+}
+
+.holo-hud-stroke-outer {
+  stroke-width: 1.5;
+  stroke-dasharray: 40 24 12 24;
+  opacity: 0.5;
+  stroke: var(--hud-secondary);
+}
+
+.holo-hud-ring-1 {
+  animation: holo-hud-spin-reverse var(--hud-speed-1) linear infinite;
+}
+
+.holo-hud-ring-2 {
+  animation: holo-hud-spin var(--hud-speed-2) linear infinite;
+}
+
+.holo-hud-ring-3 {
+  animation: holo-hud-spin-reverse var(--hud-speed-3) linear infinite;
+}
+
+.holo-hud-ring-4 {
+  animation: holo-hud-spin var(--hud-speed-4) linear infinite;
+}
+
+.holo-hud-ring-5 {
+  animation: holo-hud-spin-reverse var(--hud-speed-5) linear infinite;
+  opacity: 0.7;
+}
+
+.holo-hud-core {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.holo-hud-core-glow {
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--hud-glow) 0%,
+    var(--hud-glow-soft) 45%,
+    transparent 72%
+  );
+  filter: blur(8px);
+}
+
+.holo-hud-core-dot {
+  position: absolute;
+  width: 3%;
+  height: 3%;
+  border-radius: 50%;
+  background: var(--hud-primary);
+  box-shadow:
+    0 0 12px var(--hud-glow),
+    0 0 28px var(--hud-glow-soft);
+}
+
+.holo-hud-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.holo-hud-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--hud-primary);
+  box-shadow: 0 0 10px var(--hud-glow);
+  transform: rotate(var(--spark-angle)) translateY(calc(-1 * var(--spark-distance, 48px)));
+  animation: holo-hud-spark-burst 1.05s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes holo-hud-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes holo-hud-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes holo-hud-lock-on {
+  0% {
+    transform: perspective(900px) rotateX(68deg) rotateZ(-10deg) scale(1);
+    filter: brightness(1);
+  }
+  35% {
+    transform: perspective(900px) rotateX(68deg) rotateZ(-6deg) scale(1.1);
+    filter: brightness(1.45);
+  }
+  100% {
+    transform: perspective(900px) rotateX(68deg) rotateZ(-10deg) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes holo-hud-core-flare {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  40% {
+    transform: scale(1.55);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}
+
+@keyframes holo-hud-spark-burst {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateY(0) scale(0.4);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateY(calc(-1.6 * var(--spark-distance, 48px))) scale(0.1);
+  }
+}
+
+@media (max-width: 767px) {
+  .holo-hud {
+    opacity: 0.78;
+  }
+
+  .holo-hud-perspective {
+    transform: perspective(700px) rotateX(72deg) rotateZ(-8deg) scale(0.92);
+  }
+}
+
 @keyframes holo-mesh-shift {
   0% {
     transform: translate(0, 0) scale(1);
@@ -161,8 +483,15 @@ body {
   .holo-shimmer-border::before,
   .holo-btn-primary::after,
   .holo-nav-active,
-  .holo-progress-fill {
+  .holo-progress-fill,
+  .holo-hud-ring,
+  .holo-hud-pulse .holo-hud-perspective,
+  .holo-hud-spark {
     animation: none !important;
+  }
+
+  .holo-hud {
+    opacity: 0.45;
   }
 }
 
@@ -171,7 +500,10 @@ body {
 [data-holo-effects="off"] .holo-shimmer-border::before,
 [data-holo-effects="off"] .holo-btn-primary::after,
 [data-holo-effects="off"] .holo-nav-active,
-[data-holo-effects="off"] .holo-progress-fill {
+[data-holo-effects="off"] .holo-progress-fill,
+[data-holo-effects="off"] .holo-hud-ring,
+[data-holo-effects="off"] .holo-hud-pulse .holo-hud-perspective,
+[data-holo-effects="off"] .holo-hud-spark {
   animation: none !important;
 }
 
