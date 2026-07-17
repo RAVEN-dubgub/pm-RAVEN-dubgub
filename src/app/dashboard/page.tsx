@@ -11,13 +11,9 @@ export default async function DashboardPage() {
 
   return (
     <AppShell userName={user.name}>
-      <div className="mb-6">
-        <p className="jarvis-status-line">Cohort systems online</p>
-        <h1 className="holo-brand mt-2 text-3xl">Cohort snapshot</h1>
-        <p className="mt-2 max-w-2xl text-slate-400">
-          See where the cohort stands, what is shipping, and what needs your
-          attention next. Progress visibility is the motivation layer.
-        </p>
+      <div className="mb-4">
+        <p className="jarvis-status-line">Systems online · cohort snapshot</p>
+        <h1 className="holo-brand mt-1 text-2xl sm:text-3xl">Command center</h1>
       </div>
       <DashboardMetrics />
     </AppShell>

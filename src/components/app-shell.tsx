@@ -41,13 +41,13 @@ export function AppShell({ userName, children }: AppShellProps) {
       >
         Skip to main content
       </a>
-      <header className="holo-header">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      <header className="holo-header holo-header-immersive">
+        <div className="mx-auto flex max-w-[90rem] items-center justify-between px-3 py-2 sm:px-4">
           <div>
-            <Link href="/dashboard" className="holo-brand text-lg tracking-tight" onClick={() => onNavPick("/dashboard")}>
+            <Link href="/dashboard" className="holo-brand text-base tracking-tight sm:text-lg" onClick={() => onNavPick("/dashboard")}>
               Cohort PM
             </Link>
-            <p className="hidden text-sm text-slate-400 sm:block">Ship together. Track everything.</p>
+            <p className="jarvis-metric-label hidden text-[10px] sm:block">HUD · cohort workspace</p>
           </div>
 
           <nav className="hidden items-center gap-1 text-sm md:flex" aria-label="Main navigation">
@@ -135,7 +135,7 @@ export function AppShell({ userName, children }: AppShellProps) {
         )}
       </header>
 
-      <main id="main-content" className="mx-auto max-w-6xl px-4 py-8">
+      <main id="main-content" className="holo-viewport mx-auto max-w-[90rem] px-3 py-4 sm:px-5 sm:py-6">
         {children}
       </main>
 

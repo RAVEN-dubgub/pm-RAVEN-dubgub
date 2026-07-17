@@ -20,4 +20,13 @@ export function dispatchHoloNavPick(route: string) {
   window.dispatchEvent(
     new CustomEvent("holo-nav-pick", { detail: { route } }),
   );
+  window.dispatchEvent(
+    new CustomEvent("holo-focus-pick", { detail: { id: route, kind: "nav" } }),
+  );
 }
+
+export const HOLO_NAV_SEGMENTS = [
+  { href: "/dashboard", label: "Dashboard", angle: 0 },
+  { href: "/projects", label: "Projects", angle: 120 },
+  { href: "/tasks", label: "Tasks", angle: 240 },
+] as const;

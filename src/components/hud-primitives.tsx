@@ -94,6 +94,12 @@ type HudWidgetProps = {
   className?: string;
   accent?: "cyan" | "magenta" | "violet" | "amber" | "rose" | "emerald";
   scanlines?: boolean;
+  focusId?: string;
+  focused?: boolean;
+  dimmed?: boolean;
+  onFocus?: () => void;
+  metric?: number | string;
+  metricSuffix?: string;
 };
 
 export function HudWidget({
@@ -103,17 +109,47 @@ export function HudWidget({
   className = "",
   accent = "cyan",
   scanlines = true,
+  focusId,
+  focused = false,
+  dimmed = false,
+  onFocus,
+  metric,
+  metricSuffix,
 }: HudWidgetProps) {
+  const interactive = Boolean(onFocus);
+
   return (
     <section
-      className={`hud-widget hud-widget-${accent} ${scanlines ? "hud-widget-scanlines" : ""} ${className}`}
+      id={focusId}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? onFocus : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onFocus?.();
+              }
+            }
+          : undefined
+      }
+      className={`hud-widget hud-widget-${accent} ${scanlines ? "hud-widget-scanlines" : ""} ${focused ? "hud-widget-focused hud-scan-sweep" : ""} ${dimmed ? "hud-widget-dimmed" : ""} ${interactive ? "hud-widget-interactive" : ""} ${className}`}
     >
-      {(label || title) && (
+      {(label || title || metric !== undefined) && (
         <header className="mb-3 flex items-start justify-between gap-2">
           <div>
             {label && <p className="jarvis-metric-label">{label}</p>}
             {title && <h3 className="text-sm font-semibold text-white">{title}</h3>}
           </div>
+          {metric !== undefined && (
+            <p className="jarvis-metric-glow tabular-nums">
+              {metric}
+              {metricSuffix && (
+                <span className="jarvis-metric-glow-suffix">{metricSuffix}</span>
+              )}
+            </p>
+          )}
         </header>
       )}
       {children}

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { HowToUse } from "@/components/how-to-use";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { ArcGauge, HudWidget } from "@/components/hud-primitives";
+import { useHoloFocus } from "@/lib/holo-focus";
 import { formatDueDate, formatRelativeCheckIn, isOverdue, statusLabel } from "@/lib/types";
 
 type Metrics = {
@@ -173,6 +174,8 @@ function formatRelativeTime(iso: string) {
 
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const { focusedId, toggle, focus } = useHoloFocus<string>(null, "widget");
+  const hasFocus = focusedId !== null;
   const [projectProgress, setProjectProgress] = useState<ProjectProgress[]>([]);
   const [nextActions, setNextActions] = useState<NextAction[]>([]);
   const [peerAssignedTasks, setPeerAssignedTasks] = useState<PeerAssignedTask[]>([]);
@@ -181,6 +184,14 @@ export function DashboardMetrics() {
   const [tasksByStatus, setTasksByStatus] = useState<TasksByStatus | null>(null);
   const [atRiskProjects, setAtRiskProjects] = useState<AtRiskProject[]>([]);
   const [habitNudges, setHabitNudges] = useState<HabitNudges | null>(null);
+
+  useEffect(() => {
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") focus(null);
+    }
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [focus]);
 
   useEffect(() => {
     fetch("/api/metrics")
@@ -323,8 +334,17 @@ export function DashboardMetrics() {
         </HudWidget>
       )}
 
-      <div className="hud-dashboard-grid">
-        <HudWidget label="Cohort load" accent="cyan" className="hud-span-2">
+      <div className={`hud-dashboard-grid ${hasFocus ? "hud-dashboard-grid-focus" : ""}`}>
+        <HudWidget
+          label="Cohort load"
+          accent="cyan"
+          className="hud-span-2"
+          focusId="cohort-load"
+          focused={focusedId === "cohort-load"}
+          dimmed={hasFocus && focusedId !== "cohort-load"}
+          onFocus={() => toggle("cohort-load")}
+          metric={`${metrics.completionRate}%`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xl font-semibold text-white">
@@ -351,7 +371,16 @@ export function DashboardMetrics() {
         </HudWidget>
 
         {tasksByStatus && (
-          <HudWidget label="Task queue" title="Status breakdown" accent="violet" className="hud-span-2">
+          <HudWidget
+            label="Task queue"
+            title="Status breakdown"
+            accent="violet"
+            className="hud-span-2"
+            focusId="task-queue"
+            focused={focusedId === "task-queue"}
+            dimmed={hasFocus && focusedId !== "task-queue"}
+            onFocus={() => toggle("task-queue")}
+          >
             <StatusHudRadial data={tasksByStatus} />
             <p className="mt-3 text-xs text-slate-500">
               {metrics.overdueTasks} overdue · {metrics.completionRate}% complete
@@ -359,14 +388,30 @@ export function DashboardMetrics() {
           </HudWidget>
         )}
 
-        <HudWidget label="Your ship rate" accent="emerald">
+        <HudWidget
+          label="Your ship rate"
+          accent="emerald"
+          focusId="ship-rate"
+          focused={focusedId === "ship-rate"}
+          dimmed={hasFocus && focusedId !== "ship-rate"}
+          onFocus={() => toggle("ship-rate")}
+          metric={metrics.myDoneTasks}
+        >
           <ArcGauge value={metrics.myDoneTasks} max={Math.max(metrics.doneTasks, 1)} size={80} color="emerald">
             <span className="text-lg font-bold text-white">{metrics.myDoneTasks}</span>
           </ArcGauge>
           <p className="mt-2 text-xs text-slate-500">tasks shipped by you</p>
         </HudWidget>
 
-        <HudWidget label="Contribution" accent="cyan">
+        <HudWidget
+          label="Contribution"
+          accent="cyan"
+          focusId="contribution"
+          focused={focusedId === "contribution"}
+          dimmed={hasFocus && focusedId !== "contribution"}
+          onFocus={() => toggle("contribution")}
+          metric={`${metrics.myContributionPercent}%`}
+        >
           <ArcGauge value={metrics.myContributionPercent} size={80} color="cyan">
             <span className="text-lg font-bold text-white">{metrics.myContributionPercent}</span>
           </ArcGauge>
@@ -375,18 +420,39 @@ export function DashboardMetrics() {
           </p>
         </HudWidget>
 
-        <HudWidget label="Active members" accent="cyan">
-          <p className="text-3xl font-bold tabular-nums text-white">{metrics.activeMembers}</p>
+        <HudWidget
+          label="Active members"
+          accent="cyan"
+          focusId="active-members"
+          focused={focusedId === "active-members"}
+          dimmed={hasFocus && focusedId !== "active-members"}
+          onFocus={() => toggle("active-members")}
+          metric={metrics.activeMembers}
+        >
           <p className="text-xs text-slate-500">with open tasks</p>
         </HudWidget>
 
-        <HudWidget label="Peers working" accent="violet">
-          <p className="text-3xl font-bold tabular-nums text-white">{metrics.peersWithOpenTasks}</p>
+        <HudWidget
+          label="Peers working"
+          accent="violet"
+          focusId="peers"
+          focused={focusedId === "peers"}
+          dimmed={hasFocus && focusedId !== "peers"}
+          onFocus={() => toggle("peers")}
+          metric={metrics.peersWithOpenTasks}
+        >
           <p className="text-xs text-slate-500">others in cohort</p>
         </HudWidget>
 
-        <HudWidget label="Your queue" accent="magenta">
-          <p className="text-3xl font-bold tabular-nums text-white">{metrics.myOpenTasks}</p>
+        <HudWidget
+          label="Your queue"
+          accent="magenta"
+          focusId="your-queue"
+          focused={focusedId === "your-queue"}
+          dimmed={hasFocus && focusedId !== "your-queue"}
+          onFocus={() => toggle("your-queue")}
+          metric={metrics.myOpenTasks}
+        >
           <p className="text-xs text-slate-500">open assigned</p>
         </HudWidget>
 
@@ -394,10 +460,12 @@ export function DashboardMetrics() {
           label="Overdue"
           accent="rose"
           className={metrics.overdueTasks > 0 ? "hud-widget-alert" : ""}
+          focusId="overdue"
+          focused={focusedId === "overdue"}
+          dimmed={hasFocus && focusedId !== "overdue"}
+          onFocus={() => toggle("overdue")}
+          metric={metrics.overdueTasks}
         >
-          <p className={`text-3xl font-bold tabular-nums ${metrics.overdueTasks > 0 ? "text-rose-300" : "text-white"}`}>
-            {metrics.overdueTasks}
-          </p>
           <p className="text-xs text-slate-500">blocking momentum</p>
         </HudWidget>
 

@@ -1499,4 +1499,305 @@ body {
   .hud-task-tile:hover {
     transform: none !important;
   }
+
+  .hud-scan-sweep::after,
+  .hud-widget-focused,
+  .hud-task-tile-focused,
+  .hud-project-focused {
+    animation: none !important;
+  }
+
+  .hud-task-tile-dimmed,
+  .hud-widget-dimmed,
+  .hud-project-dimmed {
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ── Cinematic focus / projection layer ── */
+.holo-header-immersive {
+  background: rgba(4, 8, 20, 0.32);
+  border-bottom-color: rgba(34, 211, 238, 0.08);
+}
+
+.holo-viewport {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.jarvis-metric-glow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--jarvis-cyan);
+  text-shadow:
+    0 0 16px rgba(0, 212, 255, 0.65),
+    0 0 32px rgba(0, 212, 255, 0.35),
+    0 0 48px rgba(0, 212, 255, 0.15);
+}
+
+.jarvis-metric-glow-suffix {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.7);
+  text-shadow: none;
+  margin-left: 0.125rem;
+}
+
+@keyframes hud-scan-sweep {
+  0% {
+    background-position: 0 -120%;
+  }
+  100% {
+    background-position: 0 220%;
+  }
+}
+
+.hud-scan-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.hud-scan-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 212, 255, 0.06) 45%,
+    rgba(0, 212, 255, 0.14) 50%,
+    rgba(0, 212, 255, 0.06) 55%,
+    transparent 100%
+  );
+  background-size: 100% 200%;
+  animation: hud-scan-sweep 2.8s ease-in-out infinite;
+  opacity: 0.85;
+}
+
+.hud-widget-interactive {
+  cursor: pointer;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.45s ease,
+    opacity 0.45s ease,
+    box-shadow 0.45s ease,
+    border-color 0.35s ease;
+}
+
+.hud-widget-focused {
+  transform: scale(1.04) translateZ(24px);
+  border-color: rgba(0, 212, 255, 0.45) !important;
+  box-shadow:
+    0 0 32px rgba(0, 212, 255, 0.18),
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 28px rgba(0, 212, 255, 0.04);
+  z-index: 5;
+}
+
+.hud-widget-dimmed {
+  opacity: 0.42;
+  filter: blur(1.5px) saturate(0.7);
+  transform: scale(0.97) translateZ(-12px);
+  pointer-events: none;
+}
+
+.hud-dashboard-grid-focus {
+  position: relative;
+}
+
+.hud-dashboard-grid-focus::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 1rem;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.04) 0%, transparent 70%);
+}
+
+/* Ring nav segments */
+.holo-hud-nav-arc {
+  fill: none;
+  stroke: var(--hud-secondary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.2;
+  transition: opacity 0.5s ease, stroke 0.5s ease;
+}
+
+.holo-hud-nav-arc-active {
+  stroke: var(--hud-primary);
+  opacity: 0.95;
+  filter: drop-shadow(0 0 8px var(--hud-glow));
+}
+
+.holo-hud-orbit-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.holo-hud-orbit-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(0, 212, 255, 0.35);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+.holo-hud-orbit-label-active {
+  color: var(--hud-primary);
+  text-shadow: 0 0 14px var(--hud-glow);
+}
+
+.holo-hud-pulse-intense.holo-hud-pulse .holo-hud-perspective {
+  animation: holo-hud-lock-on-intense 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes holo-hud-lock-on-intense {
+  0% {
+    transform: perspective(1100px) rotateX(58deg) rotateZ(-8deg) scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: perspective(1100px) rotateX(56deg) rotateZ(-2deg) scale(1.12);
+    filter: brightness(1.65);
+  }
+  100% {
+    transform: perspective(1100px) rotateX(58deg) rotateZ(-8deg) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Task orbital field */
+.hud-task-orbit-ring {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.hud-task-field-focus .hud-task-field-center .hud-task-field-ring {
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow:
+    0 0 40px rgba(167, 139, 250, 0.2),
+    inset 0 0 32px rgba(167, 139, 250, 0.08);
+}
+
+.hud-task-tile-orbit {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.45s ease,
+    opacity 0.45s ease,
+    box-shadow 0.45s ease,
+    border-color 0.35s ease;
+  transform-style: preserve-3d;
+}
+
+.hud-task-tile-focused {
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  box-shadow:
+    0 0 36px rgba(167, 139, 250, 0.22),
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    inset 0 0 24px rgba(167, 139, 250, 0.06);
+}
+
+.hud-task-tile-dimmed {
+  opacity: 0.38;
+  filter: blur(2px) saturate(0.65);
+  pointer-events: none;
+}
+
+.hud-projection-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(4, 6, 15, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hud-projection-panel {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  background: rgba(8, 14, 28, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 1.25rem;
+  box-shadow:
+    0 0 48px rgba(167, 139, 250, 0.15),
+    0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* Project constellation orbit */
+.hud-project-constellation-focus .hud-project-orbit-ring {
+  border-color: rgba(232, 121, 249, 0.45);
+  box-shadow:
+    0 0 48px rgba(232, 121, 249, 0.15),
+    inset 0 0 32px rgba(232, 121, 249, 0.06);
+}
+
+.hud-project-orbit-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 42vw);
+  z-index: 10;
+}
+
+.hud-project-orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 140%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(232, 121, 249, 0.2);
+  pointer-events: none;
+  animation: holo-hud-spin-reverse 48s linear infinite;
+}
+
+.hud-project-satellite-orbit {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.45s ease,
+    opacity 0.45s ease;
+}
+
+.hud-project-focused {
+  border-color: rgba(232, 121, 249, 0.55) !important;
+  box-shadow:
+    0 0 36px rgba(232, 121, 249, 0.2),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hud-project-dimmed {
+  opacity: 0.4;
+  filter: blur(1.5px) saturate(0.7);
+  pointer-events: none;
+}
+
+[data-holo-effects="off"] .hud-scan-sweep::after,
+[data-holo-effects="off"] .holo-hud-orbit-label,
+[data-holo-effects="off"] .holo-hud-pulse-intense .holo-hud-perspective {
+  animation: none !important;
+}
+
+@media (max-width: 767px) {
+  .holo-hud-orbit-labels {
+    display: none;
+  }
+
+  .jarvis-metric-glow {
+    font-size: 1.5rem;
+  }
 }

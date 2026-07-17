@@ -17,12 +17,9 @@ export default async function ProjectsPage() {
 
   return (
     <AppShell userName={user.name}>
-      <div className="mb-6">
-        <h1 className="holo-brand text-3xl">Cohort projects</h1>
-        <p className="mt-2 max-w-2xl text-slate-400">
-          Shared workspaces where the cohort plans and ships work together.
-          Track momentum, risks, and weekly updates across every project.
-        </p>
+      <div className="mb-4">
+        <p className="jarvis-status-line">Project constellation · cohort workspaces</p>
+        <h1 className="holo-brand mt-1 text-2xl sm:text-3xl">Projects HUD</h1>
       </div>
       <ProjectManager
         initialProjects={initialProjects}

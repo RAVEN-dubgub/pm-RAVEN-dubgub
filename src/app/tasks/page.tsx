@@ -37,11 +37,9 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   return (
     <AppShell userName={user.name}>
-      <div className="mb-6">
-        <h1 className="holo-brand text-3xl">Cohort tasks</h1>
-        <p className="mt-2 text-slate-400">
-          Floating HUD tiles for cohort work — assign peers, track status arcs, and ship together.
-        </p>
+      <div className="mb-4">
+        <p className="jarvis-status-line">Task orbit · cohort work queue</p>
+        <h1 className="holo-brand mt-1 text-2xl sm:text-3xl">Tasks HUD</h1>
       </div>
       <TaskBoard
         initialTasks={tasks.map(serializeTask)}
