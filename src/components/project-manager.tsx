@@ -179,53 +179,156 @@ export function ProjectManager({
   const myActiveCount = activeProjects.filter(
     (p) => p.owner.id === currentUserId,
   ).length;
+  const atRiskCount = activeProjects.filter((p) => p.atRisk).length;
+  const totalTasks = activeProjects.reduce((sum, p) => sum + p.tasks.length, 0);
+  const doneTasks = activeProjects.reduce(
+    (sum, p) => sum + p.tasks.filter((t) => t.status === "DONE").length,
+    0,
+  );
+  const cohortCompletion =
+    totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+  const weeklyUpdateCount = activeProjects.filter((p) => p.weeklyUpdate).length;
+
+  const statCards = [
+    {
+      label: "Active projects",
+      value: activeProjects.length,
+      hint: "cohort workspaces shipping",
+    },
+    {
+      label: "Your projects",
+      value: myActiveCount,
+      hint: "owned by you",
+    },
+    {
+      label: "At risk",
+      value: atRiskCount,
+      hint: "need escalation",
+      alert: atRiskCount > 0,
+    },
+    {
+      label: "Weekly updates",
+      value: `${weeklyUpdateCount}/${activeProjects.length}`,
+      hint: "stakeholder visibility",
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <section className="holo-panel p-5">
-        <h2 className="mb-1 text-lg font-semibold">New project</h2>
-        <p className="mb-4 text-sm text-slate-400">
-          Every cohort member needs at least one project. Start here.
-        </p>
-        <form onSubmit={createProject} className="grid gap-3">
-          <label>
-            <span className="sr-only">Project title</span>
-            <input
-              className="holo-input w-full px-3 py-2"
-              placeholder="Project title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-              aria-label="Project title"
-            />
-          </label>
-          <label>
-            <span className="sr-only">Description</span>
-            <textarea
-              className="holo-input w-full px-3 py-2"
-              placeholder="What is this project about? (optional)"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              rows={2}
-              aria-label="Project description"
-            />
-          </label>
-          {createError ? (
-            <p className="text-sm text-rose-400" role="alert">
-              {createError}
+      <section className="holo-panel holo-panel-featured holo-panel-featured-projects p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <p className="text-xs font-medium uppercase tracking-wider text-fuchsia-300/80">
+              Cohort project board
             </p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={isCreating}
-            className="holo-btn-primary w-fit px-4 py-2 disabled:cursor-not-allowed"
+            <h2 className="mt-1 text-xl font-semibold text-white">
+              {cohortCompletion}% of project tasks complete
+            </h2>
+            <p className="mt-2 text-sm text-slate-300">
+              {activeProjects.length === 0
+                ? "Be the first to launch a cohort project — create one below."
+                : atRiskCount > 0
+                  ? `${atRiskCount} project${atRiskCount === 1 ? "" : "s"} flagged at risk — post updates early so the cohort can help.`
+                  : `${doneTasks} of ${totalTasks} tasks shipped across active projects.`}
+            </p>
+          </div>
+          <p className="text-5xl font-bold tabular-nums text-fuchsia-300">
+            {cohortCompletion}
+            <span className="text-2xl text-slate-400">%</span>
+          </p>
+        </div>
+        <div className="mt-5">
+          <div
+            className="holo-progress-track h-3"
+            role="progressbar"
+            aria-valuenow={cohortCompletion}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Cohort project task completion"
           >
-            {isCreating ? "Creating…" : "Create project"}
-          </button>
-        </form>
+            <div
+              className="holo-progress-fill h-3 transition-all duration-700"
+              style={{ width: `${cohortCompletion}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            {doneTasks} of {totalTasks} tasks done across {activeProjects.length} active
+            project{activeProjects.length === 1 ? "" : "s"}
+          </p>
+        </div>
       </section>
 
-      <section className="holo-panel p-5">
+      {!showArchived && (
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Project stats">
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              className={`holo-card p-5 ${
+                card.alert
+                  ? "border-orange-500/40 bg-orange-950/15"
+                  : "border-slate-800/80"
+              }`}
+            >
+              <p className="text-sm text-slate-400">{card.label}</p>
+              <p
+                className={`mt-2 text-3xl font-semibold tabular-nums ${
+                  card.alert ? "text-orange-300" : "text-white"
+                }`}
+              >
+                {card.value}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">{card.hint}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <div className="holo-shimmer-border">
+        <section className="holo-shimmer-inner holo-panel-glass p-5">
+          <h2 className="mb-1 text-lg font-semibold">New project</h2>
+          <p className="mb-4 text-sm text-slate-400">
+            Every cohort member needs at least one project. Start here.
+          </p>
+          <form onSubmit={createProject} className="grid gap-3">
+            <label>
+              <span className="sr-only">Project title</span>
+              <input
+                className="holo-input w-full px-3 py-2"
+                placeholder="Project title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+                aria-label="Project title"
+              />
+            </label>
+            <label>
+              <span className="sr-only">Description</span>
+              <textarea
+                className="holo-input w-full px-3 py-2"
+                placeholder="What is this project about? (optional)"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={2}
+                aria-label="Project description"
+              />
+            </label>
+            {createError ? (
+              <p className="text-sm text-rose-400" role="alert">
+                {createError}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={isCreating}
+              className="holo-btn-primary w-fit px-4 py-2 disabled:cursor-not-allowed"
+            >
+              {isCreating ? "Creating…" : "Create project"}
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <section className="holo-panel holo-panel-glass p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">
             Projects
@@ -261,11 +364,11 @@ export function ProjectManager({
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">
             {[1, 2].map((i) => (
-              <div key={i} className="h-36 animate-pulse rounded-xl bg-slate-800" />
+              <div key={i} className="holo-panel holo-panel-glass h-36 animate-pulse" />
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center">
+          <div className="holo-panel-glass rounded-xl border border-dashed border-slate-700/80 px-4 py-8 text-center">
             <p className="text-sm text-slate-400">
               {showArchived
                 ? "No archived projects."
@@ -304,7 +407,7 @@ export function ProjectManager({
               return (
                 <article
                   key={project.id}
-                  className={`group holo-card bg-slate-950/70 transition-colors has-[:focus-visible]:border-cyan-500/50 ${
+                  className={`group holo-card transition-colors has-[:focus-visible]:border-fuchsia-400/50 ${
                     isSmoke ? "border-slate-800/60 opacity-70" : ""
                   }`}
                 >
@@ -316,7 +419,7 @@ export function ProjectManager({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-medium text-white group-hover:text-cyan-50">
+                          <h3 className="font-medium text-white group-hover:text-fuchsia-100">
                             {project.title}
                           </h3>
                           {project.atRisk && !project.archived && (
@@ -348,7 +451,7 @@ export function ProjectManager({
                         <span>{progress}%</span>
                       </div>
                       <div
-                        className="h-2 rounded-full bg-slate-800"
+                        className="holo-progress-track h-2"
                         role="progressbar"
                         aria-valuenow={progress}
                         aria-valuemin={0}
@@ -356,7 +459,7 @@ export function ProjectManager({
                         aria-label={`${project.title} completion`}
                       >
                         <div
-                          className="h-2 rounded-full bg-cyan-500 transition-all"
+                          className="holo-progress-fill h-2 transition-all"
                           style={{ width: `${progress}%` }}
                         />
                       </div>

@@ -19,8 +19,9 @@ export default async function ProjectsPage() {
     <AppShell userName={user.name}>
       <div className="mb-6">
         <h1 className="holo-brand text-3xl">Cohort projects</h1>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 max-w-2xl text-slate-400">
           Shared workspaces where the cohort plans and ships work together.
+          Track momentum, risks, and weekly updates across every project.
         </p>
       </div>
       <ProjectManager

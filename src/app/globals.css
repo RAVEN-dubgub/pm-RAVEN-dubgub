@@ -440,15 +440,15 @@ body {
 
 @keyframes holo-hud-lock-on {
   0% {
-    transform: perspective(900px) rotateX(68deg) rotateZ(-10deg) scale(1);
+    transform: perspective(1100px) rotateX(58deg) rotateZ(-8deg) scale(1);
     filter: brightness(1);
   }
   35% {
-    transform: perspective(900px) rotateX(68deg) rotateZ(-6deg) scale(1.1);
+    transform: perspective(1100px) rotateX(58deg) rotateZ(-4deg) scale(1.08);
     filter: brightness(1.45);
   }
   100% {
-    transform: perspective(900px) rotateX(68deg) rotateZ(-10deg) scale(1);
+    transform: perspective(1100px) rotateX(58deg) rotateZ(-8deg) scale(1);
     filter: brightness(1);
   }
 }
@@ -701,8 +701,8 @@ body {
 .holo-shimmer-border > .holo-shimmer-inner {
   border-radius: calc(1rem - 1px);
   background: var(--holo-surface-raised);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 /* ── Interactive cards ── */
@@ -710,7 +710,9 @@ body {
   position: relative;
   border-radius: 0.75rem;
   border: 1px solid rgba(148, 163, 184, 0.15);
-  background: rgba(4, 8, 20, 0.65);
+  background: rgba(4, 8, 20, 0.32);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
   transition:
     border-color 0.25s ease,
     box-shadow 0.25s ease,
@@ -721,7 +723,7 @@ body {
 .holo-card:hover,
 .holo-card:focus-within {
   border-color: rgba(34, 211, 238, 0.45);
-  background: rgba(12, 20, 40, 0.75);
+  background: rgba(12, 20, 40, 0.42);
   box-shadow:
     0 0 20px rgba(34, 211, 238, 0.12),
     0 0 40px rgba(232, 121, 249, 0.06),
@@ -866,10 +868,46 @@ body {
   position: relative;
   z-index: 20;
   border-bottom: 1px solid rgba(34, 211, 238, 0.12);
-  background: rgba(4, 8, 20, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(4, 8, 20, 0.48);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-holo-route="projects"] .holo-nav-active {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 121, 249, 0.22) 0%,
+    rgba(244, 114, 182, 0.15) 50%,
+    rgba(232, 121, 249, 0.18) 100%
+  );
+  color: #f5d0fe;
+  box-shadow:
+    0 0 16px rgba(232, 121, 249, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-holo-route="tasks"] .holo-nav-active {
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.22) 0%,
+    rgba(129, 140, 248, 0.15) 50%,
+    rgba(167, 139, 250, 0.18) 100%
+  );
+  color: #ddd6fe;
+  box-shadow:
+    0 0 16px rgba(167, 139, 250, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-holo-route="projects"] .holo-bottom-nav-item-active {
+  color: #f0abfc;
+  text-shadow: 0 0 12px rgba(232, 121, 249, 0.6);
+}
+
+[data-holo-route="tasks"] .holo-bottom-nav-item-active {
+  color: #c4b5fd;
+  text-shadow: 0 0 12px rgba(167, 139, 250, 0.6);
 }
 
 .holo-nav-link {
@@ -916,9 +954,9 @@ body {
   right: 0;
   z-index: 20;
   border-top: 1px solid rgba(34, 211, 238, 0.15);
-  background: rgba(4, 8, 20, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(4, 8, 20, 0.55);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
 }
 
@@ -1075,9 +1113,9 @@ body {
   max-width: 28rem;
   border-radius: 1rem;
   border: 1px solid rgba(34, 211, 238, 0.2);
-  background: rgba(12, 18, 36, 0.78);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(12, 18, 36, 0.42);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   padding: 1.5rem;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.4),
