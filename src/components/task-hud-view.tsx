@@ -157,7 +157,7 @@ function TaskTileBody({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <h3
-              className={`font-medium leading-snug text-white ${expanded ? "text-lg" : ""}`}
+              className={`font-semibold leading-snug text-white ${expanded ? "text-xl" : "text-base"}`}
             >
               {task.title}
             </h3>
@@ -430,10 +430,19 @@ export function TaskHudView({
   const hasFocus = focusedId !== null;
 
   const orbitRadius = useMemo(() => {
-    const base = 200;
+    if (tasks.length <= 1) return 0;
+    if (tasks.length <= 3) return 280;
+    const base = 240;
     const extra = Math.min(tasks.length * 14, 160);
     return base + extra;
   }, [tasks.length]);
+
+  const tileWidthClass =
+    tasks.length <= 1
+      ? "hud-task-tile-solo w-[min(480px,92vw)] md:w-[min(520px,44vw)]"
+      : tasks.length <= 3
+        ? "w-[min(400px,38vw)]"
+        : "w-[min(360px,32vw)]";
 
   useEffect(() => {
     function onEscape(event: KeyboardEvent) {
@@ -464,12 +473,15 @@ export function TaskHudView({
 
   return (
     <div
-      className={`hud-task-field relative min-h-[520px] py-2 md:min-h-[560px] ${hasFocus ? "hud-task-field-focus" : ""}`}
+      className={`hud-task-field relative min-h-[560px] py-2 md:min-h-[620px] ${hasFocus ? "hud-task-field-focus" : ""}`}
       data-hud-focus={focusedId ?? undefined}
     >
-      <div className="hud-task-orbit-ring relative z-[1] hidden min-h-[480px] md:block">
+      <div className="hud-task-orbit-ring relative z-[1] hidden min-h-[520px] md:block">
         {tasks.map((task, index) => {
-          const slot = orbitSlot(index, tasks.length, orbitRadius);
+          const slot =
+            tasks.length <= 1
+              ? { x: 0, y: 0, angleDeg: 0 }
+              : orbitSlot(index, tasks.length, orbitRadius);
 
           const isFocused = focusedId === task.id;
 
@@ -499,7 +511,7 @@ export function TaskHudView({
                 }
               }}
 
-              className={`hud-task-tile hud-task-tile-orbit absolute w-[min(280px,28vw)] ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused hud-scan-sweep" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""}`}
+              className={`hud-task-tile hud-task-tile-orbit absolute ${tileWidthClass} ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused hud-scan-sweep" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""} ${tasks.length <= 1 ? "hud-task-tile-solo" : ""}`}
 
               style={{
                 left: `calc(50% + ${slot.x}px)`,
@@ -507,8 +519,10 @@ export function TaskHudView({
                 top: `calc(50% + ${slot.y}px)`,
 
                 transform: isFocused
-                  ? "translate(-50%, -50%) scale(1.08) translateZ(40px)"
-                  : `translate(-50%, -50%) rotate(${slot.angleDeg * 0.04}deg)`,
+                  ? "translate(-50%, -50%) scale(1.1) translateZ(40px)"
+                  : tasks.length <= 1
+                    ? "translate(-50%, -50%)"
+                    : `translate(-50%, -50%) rotate(${slot.angleDeg * 0.04}deg)`,
 
                 zIndex: isFocused ? 30 : 10 + index,
               }}

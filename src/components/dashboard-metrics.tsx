@@ -104,12 +104,38 @@ type TasksByStatus = {
   total: number;
 };
 
-function StatusHudRadial({ data }: { data: TasksByStatus }) {
+function StatusHudRadial({
+  data,
+  compact = false,
+}: {
+  data: TasksByStatus;
+  compact?: boolean;
+}) {
   const segments = [
     { label: "To do", count: data.todo, color: "cyan" as const },
     { label: "Active", count: data.inProgress, color: "amber" as const },
     { label: "Done", count: data.done, color: "emerald" as const },
   ];
+
+  if (compact) {
+    return (
+      <ul className="hud-status-compact space-y-1.5">
+        {segments.map((segment) => (
+          <li
+            key={segment.label}
+            className="flex items-center justify-between gap-4 text-sm"
+          >
+            <span className="text-slate-400">{segment.label}</span>
+            <span className="font-semibold tabular-nums text-white">{segment.count}</span>
+          </li>
+        ))}
+        <li className="flex items-center justify-between gap-4 border-t border-violet-500/15 pt-2">
+          <span className="jarvis-metric-label">Total queued</span>
+          <span className="text-lg font-bold tabular-nums text-white">{data.total}</span>
+        </li>
+      </ul>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-6 sm:justify-start">
@@ -455,13 +481,13 @@ export function DashboardMetrics() {
                 dimmed={hasFocus && focusedId !== "task-queue"}
                 onFocus={() => toggle("task-queue")}
               >
-                <StatusHudRadial data={tasksByStatus} />
+                <StatusHudRadial data={tasksByStatus} compact />
               </HudWidget>
             ) : null}
           </div>
 
           <div className="hud-orbit-pos-6">
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="hud-orbit-stat-row">
               <HudWidget
                 label="Your queue"
                 accent="magenta"

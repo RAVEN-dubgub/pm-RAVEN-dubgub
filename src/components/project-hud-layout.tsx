@@ -370,7 +370,7 @@ export function ProjectHudLayout({
   }, [focus]);
 
   const orbitRadius = useMemo(
-    () => 220 + Math.min(Math.max(projects.length - 1, 0) * 18, 100),
+    () => 260 + Math.min(Math.max(projects.length - 1, 0) * 20, 120),
     [projects.length],
   );
 
@@ -441,7 +441,7 @@ export function ProjectHudLayout({
     >
       {/* Desktop orbital constellation */}
 
-      <div className="relative hidden min-h-[520px] md:block">
+      <div className="relative hidden min-h-[580px] md:block">
         {satellites.map((project, index) => {
           const slot = orbitSlot(
             index,

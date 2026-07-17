@@ -20,7 +20,7 @@ export function HoloWorkspace({
   className = "",
 }: HoloWorkspaceProps) {
   return (
-    <div className={`holo-workspace ${className}`}>
+    <div className={`holo-workspace ${fab ? "holo-workspace-has-fab" : ""} ${className}`}>
       {top ? <div className="holo-orbit-zone holo-orbit-top">{top}</div> : null}
       <div className="holo-workspace-body">
         <div className="holo-void" aria-hidden="true" />
