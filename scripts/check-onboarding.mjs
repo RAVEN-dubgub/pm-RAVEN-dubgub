@@ -2,6 +2,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const peerAssignmentOnboardingWhere = (userId) => ({
+  assigneeId: { not: null },
+  NOT: { assigneeId: userId },
+  OR: [{ project: { ownerId: userId } }, { assignedById: userId }],
+});
+
 try {
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, createdAt: true },
@@ -30,10 +36,7 @@ try {
   console.log(JSON.stringify(projects, null, 2));
 
   const peerCount = await prisma.task.count({
-    where: {
-      project: { ownerId: joshua.id },
-      AND: [{ assigneeId: { not: null } }, { assigneeId: { not: joshua.id } }],
-    },
+    where: peerAssignmentOnboardingWhere(joshua.id),
   });
   console.log("=== myPeerAssignmentsEver count ===", peerCount);
 

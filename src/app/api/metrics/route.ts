@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { peerAssignmentOnboardingWhere } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 
 const activeTaskWhere = {
@@ -28,6 +29,7 @@ export async function GET() {
     myProjectsEver,
     myTasksEver,
     myPeerAssignmentsEver,
+    myActiveOwnedProjects,
     activeAssigneeRows,
     peerOpenTaskRows,
     recentCompletionsRaw,
@@ -79,12 +81,8 @@ export async function GET() {
     }),
     prisma.project.count({ where: { ownerId: user.id } }),
     prisma.task.count({ where: { project: { ownerId: user.id } } }),
-    prisma.task.count({
-      where: {
-        project: { ownerId: user.id },
-        AND: [{ assigneeId: { not: null } }, { assigneeId: { not: user.id } }],
-      },
-    }),
+    prisma.task.count({ where: peerAssignmentOnboardingWhere(user.id) }),
+    prisma.project.count({ where: { ownerId: user.id, archived: false } }),
     prisma.task.findMany({
       where: {
         assigneeId: { not: null },
@@ -233,6 +231,7 @@ export async function GET() {
     hasTask: myTasksEver > 0,
     hasAssignment: myPeerAssignmentsEver > 0,
     otherCohortMembers,
+    needsActiveOwnedProject: myProjectsEver > 0 && myActiveOwnedProjects === 0,
     completedSteps: [
       true,
       myProjectsEver > 0,

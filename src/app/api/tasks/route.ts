@@ -95,6 +95,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ task: recentDuplicate });
   }
 
+  const assignedById =
+    parsed.data.assigneeId && parsed.data.assigneeId !== user.id ? user.id : undefined;
+
   const task = await prisma.task.create({
     data: {
       title: parsed.data.title,
@@ -104,6 +107,7 @@ export async function POST(request: Request) {
       priority: parsed.data.priority ?? TaskPriority.MEDIUM,
       projectId: parsed.data.projectId,
       assigneeId: parsed.data.assigneeId ?? null,
+      assignedById,
       blockedById: parsed.data.blockedById ?? null,
       dueDate,
     },

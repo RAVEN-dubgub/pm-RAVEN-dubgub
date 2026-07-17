@@ -56,10 +56,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
   }
 
+  const assigneeId =
+    parsed.data.assigneeId === undefined ? undefined : parsed.data.assigneeId;
+  const assignedById =
+    assigneeId !== undefined && assigneeId && assigneeId !== user.id
+      ? user.id
+      : assigneeId !== undefined
+        ? null
+        : undefined;
+
   const task = await prisma.task.update({
     where: { id },
     data: {
       ...parsed.data,
+      ...(assignedById !== undefined ? { assignedById } : {}),
       dueDate:
         parsed.data.dueDate === undefined
           ? undefined
