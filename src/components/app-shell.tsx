@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { HolographicThemeToggle } from "@/components/holographic-theme-toggle";
 import { HoloRingProvider } from "@/lib/holo-ring-context";
@@ -20,14 +19,12 @@ const NAV_LINKS = [
 ];
 
 export function AppShell({ userName, children }: AppShellProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+    window.location.assign("/login");
   }
 
   function onNavPick(href: string) {

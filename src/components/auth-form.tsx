@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 type AuthFormProps = {
   mode: "login" | "signup";
 };
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -22,24 +20,37 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
     const payload =
-      mode === "login" ? { email, password } : { email, password, name };
+      mode === "login"
+        ? { email: email.trim(), password }
+        : { email: email.trim(), password, name: name.trim() };
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      });
 
-    const data = await response.json();
-    setLoading(false);
+      let data: { error?: string } = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
-    if (!response.ok) {
-      setError(data.error ?? "Request failed");
-      return;
+      if (!response.ok) {
+        setError(data.error ?? "Request failed");
+        return;
+      }
+
+      // Full navigation ensures the new session cookie is sent on the next page load.
+      window.location.assign("/dashboard");
+    } catch {
+      setError("Network error — check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -51,6 +62,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="holo-input w-full px-3 py-2"
             value={name}
             onChange={(event) => setName(event.target.value)}
+            autoComplete="name"
             required
           />
         </label>
@@ -62,6 +74,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           className="holo-input w-full px-3 py-2"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          autoComplete="email"
           required
         />
       </label>
@@ -72,11 +85,19 @@ export function AuthForm({ mode }: AuthFormProps) {
           className="holo-input w-full px-3 py-2"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          minLength={8}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          minLength={mode === "signup" ? 8 : 1}
           required
         />
+        {mode === "signup" ? (
+          <span className="mt-1 block text-xs text-slate-500">At least 8 characters</span>
+        ) : null}
       </label>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error ? (
+        <p className="rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-sm text-rose-200" role="alert">
+          {error}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={loading}

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSession, verifyPassword } from "@/lib/auth";
+import {
+  attachSessionCookie,
+  createSessionToken,
+  normalizeEmail,
+  verifyPassword,
+} from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1),
 });
 
@@ -16,20 +21,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid login data" }, { status: 400 });
     }
 
+    const email = normalizeEmail(parsed.data.email);
     const user = await prisma.user.findUnique({
-      where: { email: parsed.data.email.toLowerCase() },
+      where: { email },
       select: { id: true, email: true, name: true, passwordHash: true },
     });
 
     if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        {
+          error:
+            "Invalid email or password. If you have not signed up yet, create an account first.",
+        },
+        { status: 401 },
+      );
     }
 
     const sessionUser = { id: user.id, email: user.email, name: user.name };
-    await createSession(sessionUser);
-    return NextResponse.json({ user: sessionUser });
+    const token = await createSessionToken(sessionUser);
+    const response = NextResponse.json({ user: sessionUser });
+    return attachSessionCookie(response, token);
   } catch (error) {
     console.error("login error", error);
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    const message =
+      error instanceof Error && error.message === "AUTH_SECRET is not set"
+        ? "Server auth is not configured. Contact the site owner."
+        : "Login failed. Please try again in a moment.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
