@@ -5,6 +5,12 @@
   --background: #04060f;
   --foreground: #e8edf8;
 
+  /* JARVIS HUD palette */
+  --jarvis-cyan: #00d4ff;
+  --jarvis-navy: #0a1628;
+  --jarvis-border: rgba(0, 212, 255, 0.2);
+  --jarvis-glow: rgba(0, 212, 255, 0.55);
+
   --holo-cyan: #22d3ee;
   --holo-magenta: #e879f9;
   --holo-purple: #a78bfa;
@@ -12,8 +18,8 @@
   --holo-pink: #f472b6;
 
   --holo-base: #04060f;
-  --holo-surface: rgba(12, 18, 36, 0.72);
-  --holo-surface-raised: rgba(18, 26, 48, 0.82);
+  --holo-surface: rgba(8, 14, 28, 0.38);
+  --holo-surface-raised: rgba(12, 20, 38, 0.48);
   --holo-border: rgba(34, 211, 238, 0.18);
   --holo-border-strong: rgba(232, 121, 249, 0.35);
   --holo-glow: rgba(34, 211, 238, 0.45);
@@ -84,6 +90,73 @@ body {
   animation: holo-grid-drift 24s linear infinite;
 }
 
+.holo-bg-grid-full {
+  mask-image: radial-gradient(ellipse 130% 120% at 50% 45%, black 35%, transparent 92%);
+  opacity: 0.9;
+}
+
+.holo-bg-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition:
+    background 0.7s ease,
+    opacity 0.7s ease;
+}
+
+.holo-bg-root[data-holo-route="dashboard"] .holo-bg-tint {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(34, 211, 238, 0.16) 0%, transparent 68%),
+    linear-gradient(
+      180deg,
+      rgba(34, 211, 238, 0.08) 0%,
+      transparent 42%,
+      rgba(6, 182, 212, 0.05) 100%
+    );
+}
+
+.holo-bg-root[data-holo-route="projects"] .holo-bg-tint {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(232, 121, 249, 0.18) 0%, transparent 68%),
+    linear-gradient(
+      180deg,
+      rgba(232, 121, 249, 0.09) 0%,
+      transparent 42%,
+      rgba(244, 114, 182, 0.06) 100%
+    );
+}
+
+.holo-bg-root[data-holo-route="tasks"] .holo-bg-tint {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(167, 139, 250, 0.18) 0%, transparent 68%),
+    linear-gradient(
+      180deg,
+      rgba(167, 139, 250, 0.09) 0%,
+      transparent 42%,
+      rgba(129, 140, 248, 0.06) 100%
+    );
+}
+
+.holo-bg-root[data-holo-route="login"] .holo-bg-tint,
+.holo-bg-root[data-holo-route="signup"] .holo-bg-tint {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(56, 189, 248, 0.12) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(129, 140, 248, 0.06) 0%, transparent 100%);
+}
+
+.holo-bg-root[data-holo-route="default"] .holo-bg-tint {
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 38%, rgba(34, 211, 238, 0.1) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(167, 139, 250, 0.05) 0%, transparent 100%);
+}
+
+.holo-bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 85% 75% at 50% 50%, transparent 45%, rgba(4, 6, 15, 0.55) 100%);
+  pointer-events: none;
+}
+
 .holo-bg-scanlines {
   position: absolute;
   inset: 0;
@@ -109,14 +182,15 @@ body {
   --hud-speed-4: 12s;
   --hud-speed-5: 36s;
 
-  position: absolute;
-  bottom: -18%;
+  position: fixed;
+  top: 50%;
   left: 50%;
-  width: min(92vw, 520px);
-  height: min(92vw, 520px);
-  transform: translateX(-50%);
+  width: min(96vmin, 1080px);
+  height: min(96vmin, 1080px);
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  opacity: 0.92;
+  opacity: 0.62;
+  z-index: 0;
 }
 
 .holo-hud[data-holo-route="dashboard"] {
@@ -177,12 +251,9 @@ body {
 
 @media (min-width: 768px) {
   .holo-hud {
-    bottom: -22%;
-    left: auto;
-    right: 2%;
-    width: min(42vw, 640px);
-    height: min(42vw, 640px);
-    transform: none;
+    width: min(88vmin, 1200px);
+    height: min(88vmin, 1200px);
+    opacity: 0.58;
   }
 }
 
@@ -203,7 +274,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  transform: perspective(900px) rotateX(68deg) rotateZ(-10deg);
+  transform: perspective(1100px) rotateX(58deg) rotateZ(-8deg);
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -308,11 +379,13 @@ body {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    var(--hud-glow) 0%,
-    var(--hud-glow-soft) 45%,
+    rgba(0, 212, 255, 0.9) 0%,
+    rgba(0, 212, 255, 0.45) 35%,
+    var(--hud-glow-soft) 55%,
     transparent 72%
   );
-  filter: blur(8px);
+  filter: blur(6px);
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.5);
 }
 
 .holo-hud-core-dot {
@@ -411,11 +484,13 @@ body {
 
 @media (max-width: 767px) {
   .holo-hud {
-    opacity: 0.78;
+    width: min(105vmin, 720px);
+    height: min(105vmin, 720px);
+    opacity: 0.52;
   }
 
   .holo-hud-perspective {
-    transform: perspective(700px) rotateX(72deg) rotateZ(-8deg) scale(0.92);
+    transform: perspective(800px) rotateX(62deg) rotateZ(-6deg) scale(0.96);
   }
 }
 
@@ -480,6 +555,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .holo-bg-mesh,
   .holo-bg-grid,
+  .holo-bg-tint,
   .holo-shimmer-border::before,
   .holo-btn-primary::after,
   .holo-nav-active,
@@ -488,15 +564,17 @@ body {
   .holo-hud-pulse .holo-hud-perspective,
   .holo-hud-spark {
     animation: none !important;
+    transition: none !important;
   }
 
   .holo-hud {
-    opacity: 0.45;
+    opacity: 0.38;
   }
 }
 
 [data-holo-effects="off"] .holo-bg-mesh,
 [data-holo-effects="off"] .holo-bg-grid,
+[data-holo-effects="off"] .holo-bg-tint,
 [data-holo-effects="off"] .holo-shimmer-border::before,
 [data-holo-effects="off"] .holo-btn-primary::after,
 [data-holo-effects="off"] .holo-nav-active,
@@ -507,27 +585,101 @@ body {
   animation: none !important;
 }
 
+[data-holo-effects="off"] .holo-bg-tint {
+  opacity: 0;
+}
+
+/* ── JARVIS HUD panels ── */
+.jarvis-panel {
+  position: relative;
+  border: 1px solid var(--jarvis-border);
+  background: rgba(10, 22, 40, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 24px rgba(0, 212, 255, 0.03);
+}
+
+.jarvis-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) top left / 14px 1px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) top left / 1px 14px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) top right / 14px 1px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) top right / 1px 14px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) bottom left / 14px 1px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) bottom left / 1px 14px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) bottom right / 14px 1px no-repeat,
+    linear-gradient(var(--jarvis-cyan), var(--jarvis-cyan)) bottom right / 1px 14px no-repeat;
+  opacity: 0.7;
+}
+
+.jarvis-status-line {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jarvis-cyan);
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.45);
+}
+
+.jarvis-metric-label {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 212, 255, 0.75);
+}
+
 /* ── Glass panels ── */
 .holo-panel {
   position: relative;
   border-radius: 1rem;
   border: 1px solid var(--holo-border);
   background: var(--holo-surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.holo-panel-glass {
+  background: rgba(6, 12, 24, 0.32);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 
 .holo-panel-featured {
   background: linear-gradient(
     135deg,
-    rgba(34, 211, 238, 0.08) 0%,
-    rgba(12, 18, 36, 0.75) 40%,
-    rgba(232, 121, 249, 0.06) 100%
+    rgba(34, 211, 238, 0.1) 0%,
+    rgba(8, 14, 28, 0.35) 42%,
+    rgba(232, 121, 249, 0.08) 100%
   );
-  border-color: rgba(34, 211, 238, 0.25);
+  border-color: rgba(34, 211, 238, 0.28);
+}
+
+.holo-panel-featured-projects {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 121, 249, 0.12) 0%,
+    rgba(8, 14, 28, 0.35) 42%,
+    rgba(244, 114, 182, 0.08) 100%
+  );
+  border-color: rgba(232, 121, 249, 0.32);
+}
+
+.holo-panel-featured-tasks {
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.12) 0%,
+    rgba(8, 14, 28, 0.35) 42%,
+    rgba(129, 140, 248, 0.08) 100%
+  );
+  border-color: rgba(167, 139, 250, 0.32);
 }
 
 /* ── Shimmer border wrapper ── */
@@ -736,17 +888,25 @@ body {
 }
 
 .holo-nav-active {
-  background: linear-gradient(
-    135deg,
-    rgba(34, 211, 238, 0.2) 0%,
-    rgba(167, 139, 250, 0.15) 50%,
-    rgba(232, 121, 249, 0.18) 100%
-  );
-  color: #67e8f9;
+  position: relative;
+  background: rgba(0, 212, 255, 0.06);
+  color: var(--jarvis-cyan);
+  box-shadow: none;
+  animation: none;
+}
+
+.holo-nav-active::after {
+  content: "";
+  position: absolute;
+  bottom: 0.125rem;
+  left: 0.625rem;
+  right: 0.625rem;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--jarvis-cyan);
   box-shadow:
-    0 0 16px rgba(34, 211, 238, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  animation: holo-pulse-glow 3s ease-in-out infinite;
+    0 0 6px var(--jarvis-glow),
+    0 0 14px rgba(0, 212, 255, 0.35);
 }
 
 .holo-bottom-nav {
@@ -773,8 +933,8 @@ body {
 }
 
 .holo-bottom-nav-item-active {
-  color: #67e8f9;
-  text-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+  color: var(--jarvis-cyan);
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
 }
 
 .holo-bottom-nav-item-active::after {
@@ -786,8 +946,10 @@ body {
   width: 1.25rem;
   height: 2px;
   border-radius: 1px;
-  background: var(--holo-gradient);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+  background: var(--jarvis-cyan);
+  box-shadow:
+    0 0 6px var(--jarvis-glow),
+    0 0 12px rgba(0, 212, 255, 0.35);
 }
 
 /* ── Brand / titles ── */

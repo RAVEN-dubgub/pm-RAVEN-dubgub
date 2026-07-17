@@ -398,13 +398,11 @@ export function DashboardMetrics() {
 
       <section
         aria-labelledby="cohort-momentum-heading"
-        className="holo-panel holo-panel-featured p-6"
+        className="jarvis-panel holo-panel holo-panel-featured p-6"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-xl">
-            <p className="text-xs font-medium uppercase tracking-wider text-cyan-400/80">
-              Cohort momentum
-            </p>
+            <p className="jarvis-metric-label">Cohort load</p>
             <h2 id="cohort-momentum-heading" className="mt-1 text-xl font-semibold text-white">
               {metrics.completionRate}% of cohort tasks complete
             </h2>
@@ -450,12 +448,15 @@ export function DashboardMetrics() {
       {tasksByStatus && (
         <section
           aria-labelledby="status-chart-heading"
-          className="holo-panel p-5"
+          className="jarvis-panel holo-panel p-5"
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 id="status-chart-heading" className="text-lg font-semibold text-white">
-              Tasks by status
-            </h2>
+            <div>
+              <p className="jarvis-metric-label">Task queue</p>
+              <h2 id="status-chart-heading" className="text-lg font-semibold text-white">
+                Tasks by status
+              </h2>
+            </div>
             <div className="flex gap-4 text-sm text-slate-400">
               <span>
                 <span className="font-medium text-white">{metrics.completionRate}%</span> complete
