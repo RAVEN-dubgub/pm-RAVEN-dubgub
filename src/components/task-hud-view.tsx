@@ -511,7 +511,7 @@ export function TaskHudView({
                 }
               }}
 
-              className={`hud-task-tile hud-task-tile-orbit absolute ${tileWidthClass} ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused hud-scan-sweep" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""} ${tasks.length <= 1 ? "hud-task-tile-solo" : ""}`}
+              className={`hud-task-tile hud-task-tile-orbit absolute ${tileWidthClass} ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""} ${tasks.length <= 1 ? "hud-task-tile-solo" : ""}`}
 
               style={{
                 left: `calc(50% + ${slot.x}px)`,
@@ -586,7 +586,7 @@ export function TaskHudView({
                 }
               }}
 
-              className={`hud-task-tile ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused hud-scan-sweep" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""}`}
+              className={`hud-task-tile ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""}`}
             >
               <TaskTileBody
                 task={task}
