@@ -40,7 +40,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       <div className="mb-6">
         <h1 className="holo-brand text-3xl">Cohort tasks</h1>
         <p className="mt-2 text-slate-400">
-          Create work, assign peers, and track what the cohort is shipping together.
+          Floating HUD tiles for cohort work — assign peers, track status arcs, and ship together.
         </p>
       </div>
       <TaskBoard

@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { isSmokeUser } from "@/lib/smoke-users";
+import { ProjectHudLayout, ProjectHudStats } from "@/components/project-hud-layout";
 
 type Project = {
   id: string;
@@ -189,97 +188,32 @@ export function ProjectManager({
     totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
   const weeklyUpdateCount = activeProjects.filter((p) => p.weeklyUpdate).length;
 
-  const statCards = [
-    {
-      label: "Active projects",
-      value: activeProjects.length,
-      hint: "cohort workspaces shipping",
-    },
-    {
-      label: "Your projects",
-      value: myActiveCount,
-      hint: "owned by you",
-    },
-    {
-      label: "At risk",
-      value: atRiskCount,
-      hint: "need escalation",
-      alert: atRiskCount > 0,
-    },
-    {
-      label: "Weekly updates",
-      value: `${weeklyUpdateCount}/${activeProjects.length}`,
-      hint: "stakeholder visibility",
-    },
-  ];
-
   return (
     <div className="space-y-6">
-      <section className="holo-panel holo-panel-featured holo-panel-featured-projects p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-xl">
-            <p className="text-xs font-medium uppercase tracking-wider text-fuchsia-300/80">
-              Cohort project board
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-white">
-              {cohortCompletion}% of project tasks complete
-            </h2>
-            <p className="mt-2 text-sm text-slate-300">
-              {activeProjects.length === 0
-                ? "Be the first to launch a cohort project — create one below."
-                : atRiskCount > 0
-                  ? `${atRiskCount} project${atRiskCount === 1 ? "" : "s"} flagged at risk — post updates early so the cohort can help.`
-                  : `${doneTasks} of ${totalTasks} tasks shipped across active projects.`}
-            </p>
-          </div>
-          <p className="text-5xl font-bold tabular-nums text-fuchsia-300">
-            {cohortCompletion}
-            <span className="text-2xl text-slate-400">%</span>
-          </p>
-        </div>
-        <div className="mt-5">
-          <div
-            className="holo-progress-track h-3"
-            role="progressbar"
-            aria-valuenow={cohortCompletion}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Cohort project task completion"
-          >
-            <div
-              className="holo-progress-fill h-3 transition-all duration-700"
-              style={{ width: `${cohortCompletion}%` }}
-            />
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            {doneTasks} of {totalTasks} tasks done across {activeProjects.length} active
-            project{activeProjects.length === 1 ? "" : "s"}
-          </p>
-        </div>
-      </section>
-
       {!showArchived && (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Project stats">
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className={`holo-card p-5 ${
-                card.alert
-                  ? "border-orange-500/40 bg-orange-950/15"
-                  : "border-slate-800/80"
-              }`}
-            >
-              <p className="text-sm text-slate-400">{card.label}</p>
-              <p
-                className={`mt-2 text-3xl font-semibold tabular-nums ${
-                  card.alert ? "text-orange-300" : "text-white"
-                }`}
-              >
-                {card.value}
+        <ProjectHudStats
+          activeCount={activeProjects.length}
+          myCount={myActiveCount}
+          atRiskCount={atRiskCount}
+          weeklyUpdateCount={weeklyUpdateCount}
+          cohortCompletion={cohortCompletion}
+          doneTasks={doneTasks}
+          totalTasks={totalTasks}
+        />
+      )}
+
+      {showArchived && (
+        <section className="holo-panel holo-panel-featured holo-panel-featured-projects p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-xl">
+              <p className="text-xs font-medium uppercase tracking-wider text-fuchsia-300/80">
+                Archived projects
               </p>
-              <p className="mt-1 text-xs text-slate-500">{card.hint}</p>
+              <h2 className="mt-1 text-xl font-semibold text-white">
+                {projects.length} archived workspace{projects.length === 1 ? "" : "s"}
+              </h2>
             </div>
-          ))}
+          </div>
         </section>
       )}
 
@@ -391,183 +325,21 @@ export function ProjectManager({
             )}
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {projects.map((project) => {
-              const done = project.tasks.filter((task) => task.status === "DONE").length;
-              const total = project.tasks.length;
-              const progress = total === 0 ? 0 : Math.round((done / total) * 100);
-              const isMine = project.owner.id === currentUserId;
-              const isSmoke = isSmokeUser({
-                name: project.owner.name,
-                email: project.owner.email ?? "",
-              });
-
-              const tasksHref = `/tasks?projectId=${project.id}`;
-
-              return (
-                <article
-                  key={project.id}
-                  className={`group holo-card transition-colors has-[:focus-visible]:border-fuchsia-400/50 ${
-                    isSmoke ? "border-slate-800/60 opacity-70" : ""
-                  }`}
-                >
-                  <Link
-                    href={tasksHref}
-                    className="block cursor-pointer rounded-xl p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-                    aria-label={`Open ${project.title}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-medium text-white group-hover:text-fuchsia-100">
-                            {project.title}
-                          </h3>
-                          {project.atRisk && !project.archived && (
-                            <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-300">
-                              At risk
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-400">
-                          Owner: {project.owner.name}
-                          {isMine ? " (you)" : ""}
-                          {isSmoke ? " · test account" : ""}
-                        </p>
-                        {project.description && (
-                          <p className="mt-2 text-sm text-slate-300">{project.description}</p>
-                        )}
-                      </div>
-                      {project.archived ? (
-                        <span className="shrink-0 rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-400">
-                          Archived
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-1 flex justify-between text-xs text-slate-400">
-                        <span>
-                          {done}/{total} tasks done
-                        </span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div
-                        className="holo-progress-track h-2"
-                        role="progressbar"
-                        aria-valuenow={progress}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`${project.title} completion`}
-                      >
-                        <div
-                          className="holo-progress-fill h-2 transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                  {isMine ? (
-                    <div className="space-y-3 border-t border-slate-800/80 px-4 pb-4 pt-3">
-                      {!project.archived && (
-                        <>
-                          <label className="flex items-center gap-2 text-sm text-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={project.atRisk}
-                              onChange={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                void updateProject(project.id, {
-                                  atRisk: event.target.checked,
-                                });
-                              }}
-                              onClick={(event) => event.stopPropagation()}
-                            />
-                            Mark project at risk
-                          </label>
-                          <div onClick={(event) => event.stopPropagation()}>
-                            <p className="mb-1 text-xs font-medium text-slate-400">
-                              Weekly cohort update
-                            </p>
-                            {editingUpdateId === project.id ? (
-                              <div className="space-y-2">
-                                <textarea
-                                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-                                  rows={3}
-                                  placeholder="What changed this week? Risks, blockers, next steps for the cohort…"
-                                  value={weeklyUpdateDraft}
-                                  onChange={(event) =>
-                                    setWeeklyUpdateDraft(event.target.value)
-                                  }
-                                />
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => void saveWeeklyUpdate(project)}
-                                    className="holo-btn-primary px-3 py-1.5 text-sm"
-                                  >
-                                    Save update
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingUpdateId(null);
-                                      setWeeklyUpdateDraft("");
-                                    }}
-                                    className="holo-btn-outline px-3 py-1.5 text-sm"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                {project.weeklyUpdate ? (
-                                  <p className="text-sm text-slate-300">{project.weeklyUpdate}</p>
-                                ) : (
-                                  <p className="text-sm italic text-slate-500">
-                                    No weekly update posted yet
-                                  </p>
-                                )}
-                                {project.weeklyUpdateAt && (
-                                  <p className="text-xs text-slate-500">
-                                    Updated{" "}
-                                    {new Date(project.weeklyUpdateAt).toLocaleDateString()}
-                                  </p>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => startWeeklyUpdateEdit(project)}
-                                  className="holo-text-link text-sm"
-                                >
-                                  {project.weeklyUpdate ? "Edit update" : "Post weekly update"}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          void archiveProject(project.id, !project.archived);
-                        }}
-                        className="text-sm text-slate-400 hover:text-white"
-                      >
-                        {project.archived ? "Restore project" : "Archive project"}
-                      </button>
-                    </div>
-                  ) : project.weeklyUpdate ? (
-                    <div className="border-t border-slate-800/80 px-4 pb-4 pt-3">
-                      <p className="text-xs font-medium text-slate-400">Weekly update</p>
-                      <p className="mt-1 text-sm text-slate-300">{project.weeklyUpdate}</p>
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
+          <ProjectHudLayout
+            projects={projects}
+            currentUserId={currentUserId}
+            editingUpdateId={editingUpdateId}
+            weeklyUpdateDraft={weeklyUpdateDraft}
+            onStartWeeklyUpdateEdit={startWeeklyUpdateEdit}
+            onWeeklyUpdateDraftChange={setWeeklyUpdateDraft}
+            onSaveWeeklyUpdate={(project) => void saveWeeklyUpdate(project)}
+            onCancelWeeklyUpdate={() => {
+              setEditingUpdateId(null);
+              setWeeklyUpdateDraft("");
+            }}
+            onUpdateProject={(id, patch) => void updateProject(id, patch)}
+            onArchiveProject={(id, archived) => void archiveProject(id, archived)}
+          />
         )}
       </section>
     </div>

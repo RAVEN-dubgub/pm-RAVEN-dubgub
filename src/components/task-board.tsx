@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TaskHudFilters, TaskHudView } from "@/components/task-hud-view";
 import {
   formatDueDate,
   formatRelativeCheckIn,
@@ -44,7 +45,7 @@ type TaskBoardProps = {
   initialProjectFilter?: string;
 };
 
-type ViewMode = "list" | "board";
+type ViewMode = "hud" | "board" | "list";
 
 function assigneeLabel(user: UserOption, currentUserId: string) {
   const name = user.name.trim() || user.email;
@@ -77,7 +78,7 @@ export function TaskBoard({
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("hud");
   const [showArchived, setShowArchived] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(false);
@@ -312,6 +313,18 @@ export function TaskBoard({
     setPriorityFilter("");
   }
 
+  const taskCounts = useMemo(
+    () => ({
+      todo: tasks.filter((t) => t.status === "TODO").length,
+      inProgress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
+      done: tasks.filter((t) => t.status === "DONE").length,
+      high: tasks.filter((t) => t.priority === "HIGH").length,
+    }),
+    [tasks],
+  );
+
+  const useHudFilters = viewMode === "hud";
+
   if (projects.length === 0) {
     return (
       <div className="holo-panel border-dashed px-6 py-12 text-center">
@@ -497,11 +510,11 @@ export function TaskBoard({
             >
               <button
                 type="button"
-                onClick={() => setViewMode("list")}
-                className={`holo-picker-item ${viewMode === "list" ? "holo-picker-item-active" : ""}`}
-                aria-pressed={viewMode === "list"}
+                onClick={() => setViewMode("hud")}
+                className={`holo-picker-item ${viewMode === "hud" ? "holo-picker-item-active" : ""}`}
+                aria-pressed={viewMode === "hud"}
               >
-                List
+                HUD
               </button>
               <button
                 type="button"
@@ -510,6 +523,14 @@ export function TaskBoard({
                 aria-pressed={viewMode === "board"}
               >
                 Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`holo-picker-item ${viewMode === "list" ? "holo-picker-item-active" : ""}`}
+                aria-pressed={viewMode === "list"}
+              >
+                List
               </button>
             </div>
           </div>
@@ -542,68 +563,87 @@ export function TaskBoard({
             {listError}
           </div>
         ) : null}
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label>
-            <span className="mb-1 block text-xs text-slate-400">Project</span>
-            <select
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-              value={projectFilter}
-              onChange={(event) => setProjectFilter(event.target.value)}
-              aria-label="Filter by project"
-            >
-              <option value="">All projects</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-xs text-slate-400">Assignee</span>
-            <select
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-              value={assigneeFilter}
-              onChange={(event) => setAssigneeFilter(event.target.value)}
-              aria-label="Filter by assignee"
-            >
-              <option value="">All assignees</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {assigneeLabel(user, currentUserId)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-xs text-slate-400">Status</span>
-            <select
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              aria-label="Filter by status"
-            >
-              <option value="">All statuses</option>
-              <option value="TODO">To do</option>
-              <option value="IN_PROGRESS">In progress</option>
-              <option value="DONE">Done</option>
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-xs text-slate-400">Priority</span>
-            <select
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-              value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
-              aria-label="Filter by priority"
-            >
-              <option value="">All priorities</option>
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-            </select>
-          </label>
-        </div>
+        {useHudFilters ? (
+          <div className="mb-4">
+            <TaskHudFilters
+              projects={projects}
+              users={users}
+              currentUserId={currentUserId}
+              projectFilter={projectFilter}
+              assigneeFilter={assigneeFilter}
+              statusFilter={statusFilter}
+              priorityFilter={priorityFilter}
+              onProjectFilter={setProjectFilter}
+              onAssigneeFilter={setAssigneeFilter}
+              onStatusFilter={setStatusFilter}
+              onPriorityFilter={setPriorityFilter}
+              taskCounts={taskCounts}
+            />
+          </div>
+        ) : (
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label>
+              <span className="mb-1 block text-xs text-slate-400">Project</span>
+              <select
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={projectFilter}
+                onChange={(event) => setProjectFilter(event.target.value)}
+                aria-label="Filter by project"
+              >
+                <option value="">All projects</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-xs text-slate-400">Assignee</span>
+              <select
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={assigneeFilter}
+                onChange={(event) => setAssigneeFilter(event.target.value)}
+                aria-label="Filter by assignee"
+              >
+                <option value="">All assignees</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {assigneeLabel(user, currentUserId)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-xs text-slate-400">Status</span>
+              <select
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                aria-label="Filter by status"
+              >
+                <option value="">All statuses</option>
+                <option value="TODO">To do</option>
+                <option value="IN_PROGRESS">In progress</option>
+                <option value="DONE">Done</option>
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-xs text-slate-400">Priority</span>
+              <select
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={priorityFilter}
+                onChange={(event) => setPriorityFilter(event.target.value)}
+                aria-label="Filter by priority"
+              >
+                <option value="">All priorities</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </label>
+          </div>
+        )}
 
         {listLoading ? (
           <div className="space-y-3" aria-live="polite" aria-busy="true">
@@ -645,6 +685,20 @@ export function TaskBoard({
               </button>
             )}
           </div>
+        ) : viewMode === "hud" ? (
+          <TaskHudView
+            tasks={tasks}
+            users={users}
+            currentUserId={currentUserId}
+            checkInDrafts={checkInDrafts}
+            onCheckInDraftChange={(id, value) =>
+              setCheckInDrafts((current) => ({ ...current, [id]: value }))
+            }
+            onSubmitCheckIn={(task) => void submitCheckIn(task)}
+            onUpdateTask={(id, patch) => void updateTask(id, patch)}
+            onArchiveTask={(id, archived) => void archiveTask(id, archived)}
+            blockerOptionsForTask={blockerOptionsForTask}
+          />
         ) : viewMode === "board" ? (
           <div className="-mx-1 flex gap-4 overflow-x-auto pb-2">
             {TASK_STATUSES.map((column) => {
