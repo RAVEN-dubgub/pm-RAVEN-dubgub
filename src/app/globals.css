@@ -1645,6 +1645,7 @@ body {
 .holo-hud-orbit-label {
   position: absolute;
   transform: translate(-50%, -50%);
+  pointer-events: auto;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.5625rem;
   font-weight: 600;
@@ -1799,5 +1800,336 @@ body {
 
   .jarvis-metric-glow {
     font-size: 1.5rem;
+  }
+}
+
+/* ── Ring-centric workspace layout ── */
+.holo-viewport-immersive {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.holo-workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: min(calc(100vh - 7rem), 920px);
+  gap: 0.5rem;
+}
+
+.holo-workspace-body {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+}
+
+.holo-void {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(52vmin, 520px);
+  height: min(52vmin, 520px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    transparent 38%,
+    rgba(4, 8, 20, 0.08) 55%,
+    transparent 72%
+  );
+}
+
+.holo-orbit-zone {
+  position: relative;
+  z-index: 2;
+}
+
+.holo-orbit-top {
+  flex-shrink: 0;
+}
+
+.holo-orbit-main {
+  position: relative;
+  z-index: 1;
+  min-height: inherit;
+}
+
+.holo-orbit-bottom {
+  flex-shrink: 0;
+  padding-bottom: 0.25rem;
+}
+
+.holo-orbit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+
+.holo-orbit-overlay > * {
+  pointer-events: auto;
+}
+
+.holo-orbit-dock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  background: rgba(4, 8, 20, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.holo-fab-slot {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+}
+
+@media (min-width: 768px) {
+  .holo-fab-slot {
+    bottom: 2rem;
+  }
+}
+
+.holo-fab {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 212, 255, 0.45);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 255, 0.25) 0%,
+    rgba(167, 139, 250, 0.2) 100%
+  );
+  box-shadow:
+    0 0 24px rgba(0, 212, 255, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #e0f2fe;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.holo-fab:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 32px rgba(0, 212, 255, 0.4),
+    0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.holo-hud-core-readout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 5rem;
+  pointer-events: none;
+}
+
+[data-holo-route="dashboard"] .holo-panel,
+[data-holo-route="projects"] .holo-panel,
+[data-holo-route="tasks"] .holo-panel {
+  background: rgba(8, 14, 28, 0.28);
+  backdrop-filter: blur(14px);
+  border-color: rgba(0, 212, 255, 0.12);
+}
+
+.hud-list-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 0.75rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hud-list-chip {
+  flex: 0 0 auto;
+  min-width: min(280px, 85vw);
+  scroll-snap-align: start;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: rgba(8, 14, 28, 0.42);
+  backdrop-filter: blur(8px);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.hud-list-chip:hover {
+  border-color: rgba(0, 212, 255, 0.35);
+}
+
+.hud-list-chip-focused {
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.12);
+}
+
+.hud-board-orbit {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.hud-board-column {
+  min-width: min(240px, 78vw);
+  flex: 1;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  background: rgba(4, 8, 20, 0.32);
+  backdrop-filter: blur(8px);
+  padding: 0.75rem;
+}
+
+.hud-dashboard-orbit {
+  position: relative;
+  min-height: min(72vh, 720px);
+}
+
+.hud-dashboard-orbit-inner {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hud-dashboard-orbit-inner > * {
+  pointer-events: auto;
+}
+
+.hud-orbit-pos-12 {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, 90vw);
+}
+
+.hud-orbit-pos-3 {
+  position: absolute;
+  top: 28%;
+  right: 0;
+  width: min(200px, 42vw);
+}
+
+.hud-orbit-pos-6 {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, 94vw);
+}
+
+.hud-orbit-pos-9 {
+  position: absolute;
+  top: 28%;
+  left: 0;
+  width: min(200px, 42vw);
+}
+
+.hud-orbit-pos-12-offset {
+  position: absolute;
+  top: 8%;
+  right: 0;
+  width: min(220px, 44vw);
+}
+
+.hud-orbit-pos-bottom-dock {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 38%;
+  overflow-y: auto;
+}
+
+.hud-chip-compact {
+  border-radius: 0.625rem;
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  background: rgba(4, 8, 20, 0.35);
+  backdrop-filter: blur(10px);
+  padding: 0.625rem 0.875rem;
+}
+
+.hud-project-stats-strip .hud-widget {
+  flex: 1 1 min(160px, 45vw);
+  min-width: 0;
+}
+
+.hud-project-stats-strip .hud-span-2 {
+  flex: 2 1 min(280px, 90vw);
+}
+
+@media (max-width: 767px) {
+  .holo-void {
+    top: 28%;
+    width: min(68vmin, 380px);
+    height: min(68vmin, 380px);
+  }
+
+  .holo-workspace {
+    min-height: calc(100vh - 8rem);
+  }
+
+  .hud-orbit-pos-3,
+  .hud-orbit-pos-9,
+  .hud-orbit-pos-12-offset {
+    position: static;
+    transform: none;
+    width: 100%;
+  }
+
+  .hud-dashboard-orbit {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .hud-dashboard-orbit-inner {
+    position: static;
+    display: contents;
+  }
+
+  .hud-orbit-pos-12,
+  .hud-orbit-pos-6,
+  .hud-orbit-pos-bottom-dock {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-height: none;
+  }
+
+  .hud-task-field-center {
+    display: none;
+  }
+
+  .hud-project-orbit-ring {
+    display: none;
+  }
+
+  .hud-board-orbit {
+    margin-top: 38vh;
+  }
+
+  .hud-task-field {
+    min-height: 360px;
+  }
+
+  .hud-task-orbit-ring {
+    display: none !important;
   }
 }

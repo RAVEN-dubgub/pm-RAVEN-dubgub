@@ -21,6 +21,7 @@ import {
 } from "@/components/hud-primitives";
 
 import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
+import { useHoloRingReadout } from "@/lib/holo-ring-context";
 
 type UserOption = { id: string; name: string; email: string };
 
@@ -424,14 +425,13 @@ export function TaskHudView({
   blockerOptionsForTask,
 }: TaskHudViewProps) {
   const { focusedId, toggle, focus } = useHoloFocus<string>(null, "task");
+  const { setReadout } = useHoloRingReadout();
 
   const hasFocus = focusedId !== null;
 
   const orbitRadius = useMemo(() => {
-    const base = 140;
-
-    const extra = Math.min(tasks.length * 12, 120);
-
+    const base = 200;
+    const extra = Math.min(tasks.length * 14, 160);
     return base + extra;
   }, [tasks.length]);
 
@@ -447,23 +447,27 @@ export function TaskHudView({
 
   const focusedTask = tasks.find((task) => task.id === focusedId);
 
+  useEffect(() => {
+    if (focusedTask) {
+      setReadout({
+        metric: statusLabel(focusedTask.status).slice(0, 3).toUpperCase(),
+        primary:
+          focusedTask.title.length > 22
+            ? `${focusedTask.title.slice(0, 20)}…`
+            : focusedTask.title,
+        secondary: focusedTask.project.title,
+      });
+      return () => setReadout(null);
+    }
+    return undefined;
+  }, [focusedTask, setReadout]);
+
   return (
     <div
-      className={`hud-task-field relative min-h-[480px] py-4 ${hasFocus ? "hud-task-field-focus" : ""}`}
-
+      className={`hud-task-field relative min-h-[520px] py-2 md:min-h-[560px] ${hasFocus ? "hud-task-field-focus" : ""}`}
       data-hud-focus={focusedId ?? undefined}
     >
-      <div className="hud-task-field-center" aria-hidden="true">
-        <div className="hud-task-field-ring" />
-
-        <p className="jarvis-metric-glow text-2xl">{tasks.length}</p>
-
-        <p className="jarvis-metric-label text-center">active</p>
-      </div>
-
-      {/* Desktop: orbital ring layout */}
-
-      <div className="hud-task-orbit-ring relative z-[1] hidden min-h-[420px] md:block">
+      <div className="hud-task-orbit-ring relative z-[1] hidden min-h-[480px] md:block">
         {tasks.map((task, index) => {
           const slot = orbitSlot(index, tasks.length, orbitRadius);
 

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HoloWorkspace } from "@/components/holo-workspace";
 import { HowToUse } from "@/components/how-to-use";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { ArcGauge, HudWidget } from "@/components/hud-primitives";
 import { useHoloFocus } from "@/lib/holo-focus";
-import { formatDueDate, formatRelativeCheckIn, isOverdue, statusLabel } from "@/lib/types";
+import { useHoloRingReadout } from "@/lib/holo-ring-context";
 
 type Metrics = {
   totalProjects: number;
@@ -161,21 +162,12 @@ function overdueCohortNudge(overdue: number) {
   return `${overdue} overdue task${overdue === 1 ? "" : "s"} on your plate — clearing ${overdue === 1 ? "it" : "them"} helps the cohort stay on track.`;
 }
 
-function formatRelativeTime(iso: string) {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMins = Math.floor(diffMs / 60_000);
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-}
-
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const { focusedId, toggle, focus } = useHoloFocus<string>(null, "widget");
+  const { setReadout } = useHoloRingReadout();
   const hasFocus = focusedId !== null;
+  const [showGuide, setShowGuide] = useState(false);
   const [projectProgress, setProjectProgress] = useState<ProjectProgress[]>([]);
   const [nextActions, setNextActions] = useState<NextAction[]>([]);
   const [peerAssignedTasks, setPeerAssignedTasks] = useState<PeerAssignedTask[]>([]);
@@ -209,6 +201,24 @@ export function DashboardMetrics() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!metrics) return;
+    const focusedLabel =
+      focusedId === "cohort-load"
+        ? "Cohort load"
+        : focusedId === "your-queue"
+          ? "Your queue"
+          : focusedId === "overdue"
+            ? "Overdue"
+            : null;
+    setReadout({
+      metric: `${metrics.completionRate}%`,
+      primary: focusedLabel ?? "COHORT",
+      secondary: `${metrics.doneTasks}/${metrics.totalTasks} shipped`,
+    });
+    return () => setReadout(null);
+  }, [focusedId, metrics, setReadout]);
+
   if (!metrics) {
     return (
       <div className="space-y-4" aria-live="polite" aria-busy="true">
@@ -224,38 +234,31 @@ export function DashboardMetrics() {
 
   const overdueNudge = overdueCohortNudge(metrics.overdueTasks);
 
-  return (
-    <div className="space-y-6">
-      <HowToUse />
-
-      {onboarding && onboarding.completedSteps < onboarding.totalSteps && (
-        <OnboardingChecklist {...onboarding} />
-      )}
-
+  const topAlerts = (
+    <>
       {(metrics.peerAssignedUnstarted > 0 || overdueNudge) && (
-        <div className="hud-alert-strip space-y-3">
+        <div className="hud-alert-strip space-y-2">
           {metrics.peerAssignedUnstarted > 0 && (
             <div
               role="status"
-              className="hud-widget hud-widget-cyan flex flex-wrap items-center justify-between gap-3 !p-4"
+              className="hud-chip-compact flex flex-wrap items-center justify-between gap-3"
             >
               <p className="text-sm text-cyan-100">
                 <span className="font-semibold text-cyan-200">
                   {metrics.peerAssignedUnstarted} peer-assigned task
                   {metrics.peerAssignedUnstarted === 1 ? "" : "s"}
-                </span>
-                {" "}waiting on you.
+                </span>{" "}
+                waiting on you.
               </p>
               <Link href="/tasks" className="hud-tile-btn hud-tile-btn-accent text-sm">
                 Start now
               </Link>
             </div>
           )}
-
           {overdueNudge && (
             <div
               role="alert"
-              className="hud-widget hud-widget-rose flex flex-wrap items-center justify-between gap-3 !p-4"
+              className="hud-chip-compact flex flex-wrap items-center justify-between gap-3 border-rose-500/25"
             >
               <p className="text-sm text-rose-200">{overdueNudge}</p>
               <Link href="/tasks" className="hud-tile-btn text-sm">
@@ -265,362 +268,238 @@ export function DashboardMetrics() {
           )}
         </div>
       )}
-
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowGuide((current) => !current)}
+          className="hud-chip-compact text-xs text-slate-300 hover:text-white"
+        >
+          {showGuide ? "Hide guide" : "How to use"}
+        </button>
+        {onboarding && onboarding.completedSteps < onboarding.totalSteps && (
+          <span className="hud-chip-compact text-xs text-amber-200/90">
+            Onboarding {onboarding.completedSteps}/{onboarding.totalSteps}
+          </span>
+        )}
+      </div>
+      {showGuide ? <HowToUse /> : null}
+      {onboarding && onboarding.completedSteps < onboarding.totalSteps && !showGuide ? (
+        <OnboardingChecklist {...onboarding} />
+      ) : null}
       {habitNudges &&
         (habitNudges.staleWeeklyUpdates.length > 0 ||
           habitNudges.staleCheckIns.length > 0) && (
-          <HudWidget
-            label="PM habit nudges"
-            title="Update risks & check-ins early"
-            accent="amber"
-          >
-            <ul className="space-y-2">
-              {habitNudges.staleWeeklyUpdates.map((project) => (
-                <li
-                  key={`weekly-${project.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/15 bg-slate-950/40 px-3 py-2 text-sm"
-                >
-                  <div>
-                    <p className="font-medium text-white">Post update: {project.title}</p>
-                    <p className="text-xs text-slate-400">
-                      {project.weeklyUpdateAt
-                        ? `Last ${formatRelativeTime(project.weeklyUpdateAt)}`
-                        : "No update yet"}
-                    </p>
-                  </div>
-                  <Link href="/projects" className="hud-tile-btn text-xs">
-                    Update
-                  </Link>
+          <HudWidget label="PM nudges" accent="amber" className="!p-3">
+            <ul className="space-y-1.5 text-sm">
+              {habitNudges.staleWeeklyUpdates.slice(0, 2).map((project) => (
+                <li key={`weekly-${project.id}`} className="text-slate-300">
+                  Post update: {project.title}
                 </li>
               ))}
-              {habitNudges.staleCheckIns.map((task) => (
-                <li
-                  key={`checkin-${task.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/15 bg-slate-950/40 px-3 py-2 text-sm"
-                >
-                  <div>
-                    <p className="font-medium text-white">Check-in: {task.title}</p>
-                    <p className="text-xs text-slate-400">
-                      {task.projectTitle} · {formatRelativeCheckIn(task.lastCheckInAt)}
-                    </p>
-                  </div>
-                  <Link href="/tasks" className="hud-tile-btn text-xs">
-                    Check in
-                  </Link>
+              {habitNudges.staleCheckIns.slice(0, 2).map((task) => (
+                <li key={`checkin-${task.id}`} className="text-slate-300">
+                  Check-in: {task.title}
                 </li>
               ))}
             </ul>
           </HudWidget>
         )}
+    </>
+  );
 
+  const bottomDock = (
+    <div className="flex gap-3 overflow-x-auto pb-1">
       {atRiskProjects.length > 0 && (
-        <HudWidget label="Escalation" title="At-risk projects" accent="rose">
-          <ul className="space-y-2">
-            {atRiskProjects.map((project) => (
-              <li
-                key={project.id}
-                className="rounded-lg border border-orange-500/20 bg-slate-950/40 px-3 py-2 text-sm"
-              >
+        <div className="hud-chip-compact min-w-[min(280px,85vw)] shrink-0">
+          <p className="text-[10px] uppercase tracking-wider text-rose-300/80">At risk</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {atRiskProjects.slice(0, 3).map((project) => (
+              <li key={project.id}>
                 <p className="font-medium text-white">{project.title}</p>
-                <p className="text-xs text-orange-200/80">Owner: {project.ownerName}</p>
-                {project.weeklyUpdate ? (
-                  <p className="mt-1 text-xs text-slate-400">{project.weeklyUpdate}</p>
-                ) : (
-                  <p className="mt-1 text-xs italic text-slate-600">No status note</p>
-                )}
+                <p className="text-xs text-orange-200/80">{project.ownerName}</p>
               </li>
             ))}
           </ul>
-        </HudWidget>
+        </div>
       )}
+      {peerAssignedTasks.length > 0 && (
+        <div className="hud-chip-compact min-w-[min(280px,85vw)] shrink-0">
+          <p className="text-[10px] uppercase tracking-wider text-cyan-300/80">Peer tasks</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {peerAssignedTasks.slice(0, 4).map((task) => (
+              <li key={task.id}>
+                <p className="font-medium text-white">{task.title}</p>
+                <p className="text-xs text-cyan-300/80">From {task.fromName}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {nextActions.length > 0 && (
+        <div className="hud-chip-compact min-w-[min(280px,85vw)] shrink-0">
+          <p className="text-[10px] uppercase tracking-wider text-violet-300/80">Next actions</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {nextActions.slice(0, 4).map((task) => (
+              <li key={task.id}>
+                <p className="font-medium text-white">{task.title}</p>
+                <p className="text-xs text-slate-400">{task.project.title}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {recentCompletions.length > 0 && (
+        <div className="hud-chip-compact min-w-[min(280px,85vw)] shrink-0">
+          <p className="text-[10px] uppercase tracking-wider text-emerald-300/80">Recent wins</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {recentCompletions.slice(0, 4).map((item) => (
+              <li key={item.id}>
+                <p className="font-medium text-white">{item.title}</p>
+                <p className="text-xs text-slate-400">{item.assigneeName}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {projectProgress.length > 0 && (
+        <div className="hud-chip-compact min-w-[min(320px,90vw)] shrink-0">
+          <p className="text-[10px] uppercase tracking-wider text-fuchsia-300/80">Momentum</p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            {projectProgress.slice(0, 5).map((project) => (
+              <ArcGauge
+                key={project.id}
+                value={project.progress}
+                size={56}
+                strokeWidth={3}
+                color={project.atRisk ? "amber" : "magenta"}
+                label={
+                  project.title.length > 10 ? `${project.title.slice(0, 8)}…` : project.title
+                }
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
-      <div className={`hud-dashboard-grid ${hasFocus ? "hud-dashboard-grid-focus" : ""}`}>
-        <HudWidget
-          label="Cohort load"
-          accent="cyan"
-          className="hud-span-2"
-          focusId="cohort-load"
-          focused={focusedId === "cohort-load"}
-          dimmed={hasFocus && focusedId !== "cohort-load"}
-          onFocus={() => toggle("cohort-load")}
-          metric={`${metrics.completionRate}%`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xl font-semibold text-white">
-                {metrics.completionRate}% complete
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
+  return (
+    <HoloWorkspace
+      top={
+        <div className="space-y-2">
+          <p className="jarvis-status-line">Systems online · cohort snapshot</p>
+          {topAlerts}
+        </div>
+      }
+      bottom={bottomDock}
+    >
+      <div className={`hud-dashboard-orbit ${hasFocus ? "hud-dashboard-grid-focus" : ""}`}>
+        <div className="hud-dashboard-orbit-inner">
+          <div className="hud-orbit-pos-12">
+            <HudWidget
+              label="Cohort load"
+              accent="cyan"
+              focusId="cohort-load"
+              focused={focusedId === "cohort-load"}
+              dimmed={hasFocus && focusedId !== "cohort-load"}
+              onFocus={() => toggle("cohort-load")}
+              metric={`${metrics.completionRate}%`}
+            >
+              <p className="text-sm text-slate-400">
                 {cohortMotivationCopy(
                   metrics.completionRate,
                   metrics.activeMembers,
                   metrics.peersWithOpenTasks,
                 )}
               </p>
-              <p className="mt-2 text-xs text-slate-500">
-                {metrics.activeMembers} active · {metrics.cohortMembers} signed up
-              </p>
-            </div>
-            <ArcGauge value={metrics.completionRate} size={110} color="cyan">
-              <span className="text-2xl font-bold tabular-nums text-white">
-                {metrics.completionRate}
-              </span>
-              <span className="text-xs text-slate-400">%</span>
-            </ArcGauge>
+            </HudWidget>
           </div>
-        </HudWidget>
 
-        {tasksByStatus && (
-          <HudWidget
-            label="Task queue"
-            title="Status breakdown"
-            accent="violet"
-            className="hud-span-2"
-            focusId="task-queue"
-            focused={focusedId === "task-queue"}
-            dimmed={hasFocus && focusedId !== "task-queue"}
-            onFocus={() => toggle("task-queue")}
-          >
-            <StatusHudRadial data={tasksByStatus} />
-            <p className="mt-3 text-xs text-slate-500">
-              {metrics.overdueTasks} overdue · {metrics.completionRate}% complete
-            </p>
-          </HudWidget>
-        )}
-
-        <HudWidget
-          label="Your ship rate"
-          accent="emerald"
-          focusId="ship-rate"
-          focused={focusedId === "ship-rate"}
-          dimmed={hasFocus && focusedId !== "ship-rate"}
-          onFocus={() => toggle("ship-rate")}
-          metric={metrics.myDoneTasks}
-        >
-          <ArcGauge value={metrics.myDoneTasks} max={Math.max(metrics.doneTasks, 1)} size={80} color="emerald">
-            <span className="text-lg font-bold text-white">{metrics.myDoneTasks}</span>
-          </ArcGauge>
-          <p className="mt-2 text-xs text-slate-500">tasks shipped by you</p>
-        </HudWidget>
-
-        <HudWidget
-          label="Contribution"
-          accent="cyan"
-          focusId="contribution"
-          focused={focusedId === "contribution"}
-          dimmed={hasFocus && focusedId !== "contribution"}
-          onFocus={() => toggle("contribution")}
-          metric={`${metrics.myContributionPercent}%`}
-        >
-          <ArcGauge value={metrics.myContributionPercent} size={80} color="cyan">
-            <span className="text-lg font-bold text-white">{metrics.myContributionPercent}</span>
-          </ArcGauge>
-          <p className="mt-2 text-xs text-slate-500">
-            {metrics.myDoneTasks}/{metrics.doneTasks} cohort done
-          </p>
-        </HudWidget>
-
-        <HudWidget
-          label="Active members"
-          accent="cyan"
-          focusId="active-members"
-          focused={focusedId === "active-members"}
-          dimmed={hasFocus && focusedId !== "active-members"}
-          onFocus={() => toggle("active-members")}
-          metric={metrics.activeMembers}
-        >
-          <p className="text-xs text-slate-500">with open tasks</p>
-        </HudWidget>
-
-        <HudWidget
-          label="Peers working"
-          accent="violet"
-          focusId="peers"
-          focused={focusedId === "peers"}
-          dimmed={hasFocus && focusedId !== "peers"}
-          onFocus={() => toggle("peers")}
-          metric={metrics.peersWithOpenTasks}
-        >
-          <p className="text-xs text-slate-500">others in cohort</p>
-        </HudWidget>
-
-        <HudWidget
-          label="Your queue"
-          accent="magenta"
-          focusId="your-queue"
-          focused={focusedId === "your-queue"}
-          dimmed={hasFocus && focusedId !== "your-queue"}
-          onFocus={() => toggle("your-queue")}
-          metric={metrics.myOpenTasks}
-        >
-          <p className="text-xs text-slate-500">open assigned</p>
-        </HudWidget>
-
-        <HudWidget
-          label="Overdue"
-          accent="rose"
-          className={metrics.overdueTasks > 0 ? "hud-widget-alert" : ""}
-          focusId="overdue"
-          focused={focusedId === "overdue"}
-          dimmed={hasFocus && focusedId !== "overdue"}
-          onFocus={() => toggle("overdue")}
-          metric={metrics.overdueTasks}
-        >
-          <p className="text-xs text-slate-500">blocking momentum</p>
-        </HudWidget>
-
-        <HudWidget label="Shipped" accent="emerald" className="hud-span-2">
-          <div className="flex items-center gap-4">
-            <ArcGauge
-              value={metrics.doneTasks}
-              max={Math.max(metrics.totalTasks, 1)}
-              size={72}
-              color="emerald"
+          <div className="hud-orbit-pos-3">
+            <HudWidget
+              label="Your ship rate"
+              accent="emerald"
+              focusId="ship-rate"
+              focused={focusedId === "ship-rate"}
+              dimmed={hasFocus && focusedId !== "ship-rate"}
+              onFocus={() => toggle("ship-rate")}
+              metric={metrics.myDoneTasks}
             >
-              <span className="text-base font-bold text-white">{metrics.doneTasks}</span>
-            </ArcGauge>
-            <div>
-              <p className="text-lg font-semibold text-white">
-                {metrics.doneTasks}/{metrics.totalTasks}
+              <p className="text-xs text-slate-500">tasks shipped</p>
+            </HudWidget>
+          </div>
+
+          <div className="hud-orbit-pos-9">
+            <HudWidget
+              label="Contribution"
+              accent="cyan"
+              focusId="contribution"
+              focused={focusedId === "contribution"}
+              dimmed={hasFocus && focusedId !== "contribution"}
+              onFocus={() => toggle("contribution")}
+              metric={`${metrics.myContributionPercent}%`}
+            >
+              <p className="text-xs text-slate-500">
+                {metrics.myDoneTasks}/{metrics.doneTasks} cohort done
               </p>
-              <p className="text-xs text-slate-500">cohort tasks complete</p>
-            </div>
+            </HudWidget>
           </div>
-        </HudWidget>
-      </div>
 
-      {recentCompletions.length > 0 && (
-        <HudWidget label="Recent wins" title="Cohort momentum" accent="emerald">
-          <ul className="space-y-2">
-            {recentCompletions.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/10 bg-slate-950/40 px-3 py-2 text-sm"
+          <div className="hud-orbit-pos-12-offset">
+            {tasksByStatus ? (
+              <HudWidget
+                label="Task queue"
+                accent="violet"
+                focusId="task-queue"
+                focused={focusedId === "task-queue"}
+                dimmed={hasFocus && focusedId !== "task-queue"}
+                onFocus={() => toggle("task-queue")}
               >
-                <div>
-                  <p className="font-medium text-white">{item.title}</p>
-                  <p className="text-xs text-slate-400">
-                    {item.assigneeName} · {item.projectTitle}
-                  </p>
-                </div>
-                <span className="text-[10px] text-slate-500">
-                  {formatRelativeTime(item.completedAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </HudWidget>
-      )}
-
-      <div className="hud-dashboard-grid">
-        {peerAssignedTasks.length > 0 && (
-          <HudWidget
-            label="Peer accountability"
-            title="From your cohort"
-            accent="cyan"
-            className="hud-span-2"
-          >
-            <div className="mb-3 flex justify-end">
-              <Link href="/tasks" className="holo-text-link text-xs">
-                All tasks →
-              </Link>
-            </div>
-            <ul className="space-y-2">
-              {peerAssignedTasks.map((task) => {
-                const overdue = isOverdue(task.dueDate, task.status);
-                return (
-                  <li
-                    key={task.id}
-                    className={`rounded-lg border px-3 py-2 text-sm ${
-                      overdue
-                        ? "border-rose-500/30 bg-rose-950/20"
-                        : "border-cyan-500/15 bg-slate-950/40"
-                    }`}
-                  >
-                    <p className="font-medium text-white">{task.title}</p>
-                    <p className="text-xs text-cyan-300/80">From {task.fromName}</p>
-                    <p className="text-xs text-slate-400">
-                      {task.projectTitle} · {statusLabel(task.status)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          </HudWidget>
-        )}
-
-        {projectProgress.length > 0 && (
-          <HudWidget label="Project momentum" accent="magenta" className="hud-span-2">
-            <div className="mb-3 flex justify-end">
-              <Link href="/projects" className="holo-text-link text-xs">
-                All projects →
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              {projectProgress.map((project) => (
-                <ArcGauge
-                  key={project.id}
-                  value={project.progress}
-                  size={68}
-                  strokeWidth={4}
-                  color={project.atRisk ? "amber" : "magenta"}
-                  label={project.title.length > 14 ? `${project.title.slice(0, 12)}…` : project.title}
-                  sublabel={`${project.done}/${project.total}`}
-                />
-              ))}
-            </div>
-          </HudWidget>
-        )}
-
-        <HudWidget
-          label="Next actions"
-          title="Your queue"
-          accent="violet"
-          className="hud-span-2"
-        >
-          <div className="mb-3 flex justify-end">
-            <Link href="/tasks" className="holo-text-link text-xs">
-              View all →
-            </Link>
+                <StatusHudRadial data={tasksByStatus} />
+              </HudWidget>
+            ) : null}
           </div>
-          {nextActions.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-violet-500/20 px-4 py-6 text-center">
-              <p className="text-sm text-slate-400">No open tasks assigned to you.</p>
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                <Link href="/tasks" className="holo-btn-primary rounded-lg px-3 py-1.5 text-sm">
-                  Browse tasks
+
+          <div className="hud-orbit-pos-6">
+            <div className="flex flex-wrap justify-center gap-2">
+              <HudWidget
+                label="Your queue"
+                accent="magenta"
+                focusId="your-queue"
+                focused={focusedId === "your-queue"}
+                dimmed={hasFocus && focusedId !== "your-queue"}
+                onFocus={() => toggle("your-queue")}
+                metric={metrics.myOpenTasks}
+              >
+                <Link href="/tasks" className="holo-text-link text-xs">
+                  Open tasks →
                 </Link>
-                <Link href="/projects" className="holo-btn-outline rounded-lg px-3 py-1.5 text-sm">
-                  Start project
-                </Link>
-              </div>
+              </HudWidget>
+              <HudWidget
+                label="Overdue"
+                accent="rose"
+                className={metrics.overdueTasks > 0 ? "hud-widget-alert" : ""}
+                focusId="overdue"
+                focused={focusedId === "overdue"}
+                dimmed={hasFocus && focusedId !== "overdue"}
+                onFocus={() => toggle("overdue")}
+                metric={metrics.overdueTasks}
+              >
+                <p className="text-xs text-slate-500">blocking momentum</p>
+              </HudWidget>
+              <HudWidget label="Active" accent="cyan" metric={metrics.activeMembers}>
+                <p className="text-xs text-slate-500">members moving</p>
+              </HudWidget>
+              <HudWidget label="Peers" accent="violet" metric={metrics.peersWithOpenTasks}>
+                <p className="text-xs text-slate-500">with open work</p>
+              </HudWidget>
+              <HudWidget label="Shipped" accent="emerald" metric={metrics.doneTasks}>
+                <p className="text-xs text-slate-500">of {metrics.totalTasks} total</p>
+              </HudWidget>
             </div>
-          ) : (
-            <ul className="space-y-2">
-              {nextActions.map((task) => {
-                const overdue = isOverdue(task.dueDate, task.status);
-                return (
-                  <li
-                    key={task.id}
-                    className={`rounded-lg border px-3 py-2 text-sm ${
-                      overdue ? "border-rose-500/30 bg-rose-950/20" : "border-slate-800/60 bg-slate-950/40"
-                    }`}
-                  >
-                    <p className="font-medium text-white">{task.title}</p>
-                    {task.fromPeer && (
-                      <p className="text-xs text-cyan-300/80">From {task.fromPeer.name}</p>
-                    )}
-                    <p className="text-xs text-slate-400">
-                      {task.project.title} · {statusLabel(task.status)}
-                      {task.dueDate ? ` · Due ${formatDueDate(task.dueDate)}` : ""}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </HudWidget>
+          </div>
+        </div>
       </div>
-    </div>
+    </HoloWorkspace>
   );
 }

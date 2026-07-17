@@ -2,20 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { HoloWorkspace } from "@/components/holo-workspace";
 import { TaskHudFilters, TaskHudView } from "@/components/task-hud-view";
-import {
-  formatDueDate,
-  formatRelativeCheckIn,
-  isCheckInStale,
-  isDueSoon,
-  isOverdue,
-  isTaskBlocked,
-  priorityColorClass,
-  priorityLabel,
-  statusColorClass,
-  statusLabel,
-  TASK_STATUSES,
-} from "@/lib/types";
+import { useHoloRingReadout } from "@/lib/holo-ring-context";
+import { TASK_STATUSES } from "@/lib/types";
 
 type UserOption = { id: string; name: string; email: string };
 type ProjectOwner = { id: string; name: string; email: string };
@@ -52,18 +42,6 @@ function assigneeLabel(user: UserOption, currentUserId: string) {
   return user.id === currentUserId ? `${name} (you)` : name;
 }
 
-function isPeerAssigned(task: TaskItem, currentUserId: string) {
-  return (
-    task.assignee?.id === currentUserId &&
-    task.project.ownerId !== currentUserId
-  );
-}
-
-function peerFromLabel(task: TaskItem) {
-  const name = task.project.owner.name.trim() || task.project.owner.email;
-  return `From ${name}`;
-}
-
 export function TaskBoard({
   initialTasks,
   initialUsers,
@@ -94,7 +72,8 @@ export function TaskBoard({
   const [definitionOfDone, setDefinitionOfDone] = useState("");
   const [error, setError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { setReadout } = useHoloRingReadout();
   const [checkInDrafts, setCheckInDrafts] = useState<Record<string, string>>({});
   const skipInitialFetch = useRef(true);
 
@@ -323,7 +302,14 @@ export function TaskBoard({
     [tasks],
   );
 
-  const useHudFilters = viewMode === "hud";
+  useEffect(() => {
+    setReadout({
+      metric: tasks.length,
+      primary: "TASKS",
+      secondary: `${taskCounts.done} done · ${taskCounts.inProgress} active`,
+    });
+    return () => setReadout(null);
+  }, [tasks.length, taskCounts.done, taskCounts.inProgress, setReadout]);
 
   if (projects.length === 0) {
     return (
@@ -342,230 +328,144 @@ export function TaskBoard({
     );
   }
 
+  const createForm = (
+    <form onSubmit={createTask} className="grid gap-3 md:grid-cols-2">
+      <label className="md:col-span-2">
+        <span className="sr-only">Task title</span>
+        <input
+          className="holo-input w-full px-3 py-2"
+          placeholder="Task title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          required
+          disabled={isCreating}
+          aria-label="Task title"
+        />
+      </label>
+      <label className="md:col-span-2">
+        <span className="sr-only">Description</span>
+        <textarea
+          className="holo-input w-full px-3 py-2"
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={2}
+          disabled={isCreating}
+          aria-label="Task description"
+        />
+      </label>
+      <label className="md:col-span-2">
+        <span className="mb-1 block text-xs text-slate-400">Definition of done</span>
+        <input
+          className="holo-input w-full px-3 py-2"
+          placeholder="How will the cohort know this is truly complete?"
+          value={definitionOfDone}
+          onChange={(event) => setDefinitionOfDone(event.target.value)}
+          disabled={isCreating}
+          aria-label="Definition of done"
+        />
+      </label>
+      <label>
+        <span className="mb-1 block text-xs text-slate-400">Project</span>
+        <select
+          className="holo-input w-full px-3 py-2"
+          value={projectId}
+          onChange={(event) => {
+            setProjectId(event.target.value);
+            setBlockedById("");
+          }}
+          required
+          disabled={isCreating}
+          aria-label="Select project"
+        >
+          <option value="">Select project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span className="mb-1 block text-xs text-slate-400">Priority</span>
+        <select
+          className="holo-input w-full px-3 py-2"
+          value={priority}
+          onChange={(event) =>
+            setPriority(event.target.value as "LOW" | "MEDIUM" | "HIGH")
+          }
+          disabled={isCreating}
+          aria-label="Task priority"
+        >
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+        </select>
+      </label>
+      <label>
+        <span className="mb-1 block text-xs text-slate-400">Assignee</span>
+        <select
+          className="holo-input w-full px-3 py-2"
+          value={assigneeId}
+          onChange={(event) => setAssigneeId(event.target.value)}
+          disabled={isCreating}
+          aria-label="Assign to cohort member"
+        >
+          <option value="">Unassigned</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {assigneeLabel(user, currentUserId)}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-xs text-slate-500">
+          For onboarding step 4, pick another member — not &ldquo;(you)&rdquo;.
+        </span>
+      </label>
+      <label>
+        <span className="mb-1 block text-xs text-slate-400">Blocked by</span>
+        <select
+          className="holo-input w-full px-3 py-2"
+          value={blockedById}
+          onChange={(event) => setBlockedById(event.target.value)}
+          disabled={isCreating || !projectId}
+          aria-label="Blocked by another task"
+        >
+          <option value="">Not blocked</option>
+          {createBlockerOptions.map((task) => (
+            <option key={task.id} value={task.id}>
+              {task.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span className="mb-1 block text-xs text-slate-400">Due date</span>
+        <input
+          type="date"
+          className="holo-input w-full px-3 py-2"
+          value={dueDate}
+          onChange={(event) => setDueDate(event.target.value)}
+          disabled={isCreating}
+          aria-label="Due date"
+        />
+      </label>
+      <button
+        type="submit"
+        disabled={isCreating}
+        className="holo-btn-primary rounded-lg px-4 py-2 disabled:cursor-not-allowed md:self-end"
+      >
+        {isCreating ? "Adding…" : "Add task"}
+      </button>
+    </form>
+  );
+
   return (
-    <div className="space-y-6">
-      <section className="holo-panel p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Create task</h2>
-          <button
-            type="button"
-            onClick={() => setShowCreateForm((v) => !v)}
-            className="text-sm text-slate-400 hover:text-white md:hidden"
-            aria-expanded={showCreateForm}
-          >
-            {showCreateForm ? "Hide form" : "Show form"}
-          </button>
-        </div>
-        {showCreateForm && (
-          <form onSubmit={createTask} className="grid gap-3 md:grid-cols-2">
-            <label className="md:col-span-2">
-              <span className="sr-only">Task title</span>
-              <input
-                className="holo-input w-full px-3 py-2"
-                placeholder="Task title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                disabled={isCreating}
-                aria-label="Task title"
-              />
-            </label>
-            <label className="md:col-span-2">
-              <span className="sr-only">Description</span>
-              <textarea
-                className="holo-input w-full px-3 py-2"
-                placeholder="Description (optional)"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={2}
-                disabled={isCreating}
-                aria-label="Task description"
-              />
-            </label>
-            <label className="md:col-span-2">
-              <span className="mb-1 block text-xs text-slate-400">Definition of done</span>
-              <input
-                className="holo-input w-full px-3 py-2"
-                placeholder="How will the cohort know this is truly complete?"
-                value={definitionOfDone}
-                onChange={(event) => setDefinitionOfDone(event.target.value)}
-                disabled={isCreating}
-                aria-label="Definition of done"
-              />
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Project</span>
-              <select
-                className="holo-input w-full px-3 py-2"
-                value={projectId}
-                onChange={(event) => {
-                  setProjectId(event.target.value);
-                  setBlockedById("");
-                }}
-                required
-                disabled={isCreating}
-                aria-label="Select project"
-              >
-                <option value="">Select project</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Priority</span>
-              <select
-                className="holo-input w-full px-3 py-2"
-                value={priority}
-                onChange={(event) =>
-                  setPriority(event.target.value as "LOW" | "MEDIUM" | "HIGH")
-                }
-                disabled={isCreating}
-                aria-label="Task priority"
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Assignee</span>
-              <select
-                className="holo-input w-full px-3 py-2"
-                value={assigneeId}
-                onChange={(event) => setAssigneeId(event.target.value)}
-                disabled={isCreating}
-                aria-label="Assign to cohort member"
-              >
-                <option value="">Unassigned</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {assigneeLabel(user, currentUserId)}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1 block text-xs text-slate-500">
-                For onboarding step 4, pick another member — not &ldquo;(you)&rdquo;.
-              </span>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Blocked by</span>
-              <select
-                className="holo-input w-full px-3 py-2"
-                value={blockedById}
-                onChange={(event) => setBlockedById(event.target.value)}
-                disabled={isCreating || !projectId}
-                aria-label="Blocked by another task"
-              >
-                <option value="">Not blocked</option>
-                {createBlockerOptions.map((task) => (
-                  <option key={task.id} value={task.id}>
-                    {task.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Due date</span>
-              <input
-                type="date"
-                className="holo-input w-full px-3 py-2"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-                disabled={isCreating}
-                aria-label="Due date"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="holo-btn-primary rounded-lg px-4 py-2 disabled:cursor-not-allowed md:self-end"
-            >
-              {isCreating ? "Adding…" : "Add task"}
-            </button>
-          </form>
-        )}
-        {error && (
-          <p className="mt-2 text-sm text-rose-400" role="alert">
-            {error}
-          </p>
-        )}
-      </section>
-
-      <section className="holo-panel p-5">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-lg font-semibold">
-              Tasks
-              <span className="ml-2 text-sm font-normal text-slate-400">
-                ({tasks.length} shown)
-              </span>
-            </h2>
-            <div
-              className="holo-picker"
-              role="group"
-              aria-label="View mode"
-            >
-              <button
-                type="button"
-                onClick={() => setViewMode("hud")}
-                className={`holo-picker-item ${viewMode === "hud" ? "holo-picker-item-active" : ""}`}
-                aria-pressed={viewMode === "hud"}
-              >
-                HUD
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("board")}
-                className={`holo-picker-item ${viewMode === "board" ? "holo-picker-item-active" : ""}`}
-                aria-pressed={viewMode === "board"}
-              >
-                Board
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`holo-picker-item ${viewMode === "list" ? "holo-picker-item-active" : ""}`}
-                aria-pressed={viewMode === "list"}
-              >
-                List
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-400">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(event) => setShowArchived(event.target.checked)}
-              />
-              Show archived only
-            </label>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="holo-text-link text-sm"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        </div>
-
-        {listError ? (
-          <div
-            className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
-            role="alert"
-          >
-            {listError}
-          </div>
-        ) : null}
-        {useHudFilters ? (
-          <div className="mb-4">
-            <TaskHudFilters
+    <HoloWorkspace
+      top={
+        <div className="space-y-2">
+          <p className="jarvis-status-line">Task orbit · cohort work queue</p>
+          <TaskHudFilters
               projects={projects}
               users={users}
               currentUserId={currentUserId}
@@ -579,417 +479,201 @@ export function TaskBoard({
               onPriorityFilter={setPriorityFilter}
               taskCounts={taskCounts}
             />
+        </div>
+      }
+      bottom={
+        <div className="holo-orbit-dock">
+          <div className="holo-picker" role="group" aria-label="View mode">
+            <button
+              type="button"
+              onClick={() => setViewMode("hud")}
+              className={`holo-picker-item ${viewMode === "hud" ? "holo-picker-item-active" : ""}`}
+              aria-pressed={viewMode === "hud"}
+            >
+              HUD
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("board")}
+              className={`holo-picker-item ${viewMode === "board" ? "holo-picker-item-active" : ""}`}
+              aria-pressed={viewMode === "board"}
+            >
+              Board
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`holo-picker-item ${viewMode === "list" ? "holo-picker-item-active" : ""}`}
+              aria-pressed={viewMode === "list"}
+            >
+              List
+            </button>
           </div>
-        ) : (
-          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Project</span>
-              <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-                value={projectFilter}
-                onChange={(event) => setProjectFilter(event.target.value)}
-                aria-label="Filter by project"
-              >
-                <option value="">All projects</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="text-slate-400">{tasks.length} shown</span>
+            <label className="flex items-center gap-2 text-slate-400">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(event) => setShowArchived(event.target.checked)}
+              />
+              Archived only
             </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Assignee</span>
-              <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-                value={assigneeFilter}
-                onChange={(event) => setAssigneeFilter(event.target.value)}
-                aria-label="Filter by assignee"
-              >
-                <option value="">All assignees</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {assigneeLabel(user, currentUserId)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Status</span>
-              <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                aria-label="Filter by status"
-              >
-                <option value="">All statuses</option>
-                <option value="TODO">To do</option>
-                <option value="IN_PROGRESS">In progress</option>
-                <option value="DONE">Done</option>
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs text-slate-400">Priority</span>
-              <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
-                value={priorityFilter}
-                onChange={(event) => setPriorityFilter(event.target.value)}
-                aria-label="Filter by priority"
-              >
-                <option value="">All priorities</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-              </select>
-            </label>
-          </div>
-        )}
-
-        {listLoading ? (
-          <div className="space-y-3" aria-live="polite" aria-busy="true">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl bg-slate-800" />
-            ))}
-          </div>
-        ) : tasks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center">
-            <p className="text-sm text-slate-400">
-              {showArchived
-                ? "No archived tasks."
-                : hasActiveFilters
-                  ? "No tasks match these filters."
-                  : "No tasks yet — add one above to get started."}
-            </p>
-            {!showArchived && !hasActiveFilters && (
-              <>
-                <p className="mt-2 text-xs text-slate-500">
-                  Archived tasks are hidden by default. Use &quot;Show archived
-                  only&quot; to find and restore them.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowArchived(true)}
-                  className="mt-4 text-sm text-cyan-400 hover:text-cyan-300"
-                >
-                  Check archived tasks →
-                </button>
-              </>
-            )}
             {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="mt-2 text-sm text-cyan-400 hover:text-cyan-300"
-              >
+              <button type="button" onClick={clearFilters} className="holo-text-link">
                 Clear filters
               </button>
             )}
           </div>
-        ) : viewMode === "hud" ? (
-          <TaskHudView
-            tasks={tasks}
-            users={users}
-            currentUserId={currentUserId}
-            checkInDrafts={checkInDrafts}
-            onCheckInDraftChange={(id, value) =>
-              setCheckInDrafts((current) => ({ ...current, [id]: value }))
-            }
-            onSubmitCheckIn={(task) => void submitCheckIn(task)}
-            onUpdateTask={(id, patch) => void updateTask(id, patch)}
-            onArchiveTask={(id, archived) => void archiveTask(id, archived)}
-            blockerOptionsForTask={blockerOptionsForTask}
-          />
-        ) : viewMode === "board" ? (
-          <div className="-mx-1 flex gap-4 overflow-x-auto pb-2">
-            {TASK_STATUSES.map((column) => {
-              const columnTasks = tasks.filter((task) => task.status === column.value);
-              return (
-                <div
-                  key={column.value}
-                  className="min-w-[280px] flex-1 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-white">{column.label}</h3>
-                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-                      {columnTasks.length}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    {columnTasks.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-700 px-3 py-6 text-center text-xs text-slate-500">
-                        No tasks
-                      </p>
-                    ) : (
-                      columnTasks.map((task) => {
-                        const overdue = isOverdue(task.dueDate, task.status);
-                        const blocked = isTaskBlocked(task.blockedBy);
-                        return (
-                          <article
-                            key={task.id}
-                            className={`holo-card p-3 text-sm ${
-                              overdue
-                                ? "border-rose-500/40 bg-rose-950/20"
-                                : blocked
-                                  ? "border-violet-500/30 bg-violet-950/10"
-                                  : "border-slate-800 bg-slate-950/70"
-                            }`}
-                          >
-                            <h3 className="font-medium text-white">{task.title}</h3>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-xs ${priorityColorClass(task.priority)}`}
-                              >
-                                {priorityLabel(task.priority)}
-                              </span>
-                              {blocked && (
-                                <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-300">
-                                  Blocked
-                                </span>
-                              )}
-                              {isPeerAssigned(task, currentUserId) && (
-                                <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs text-cyan-300">
-                                  {peerFromLabel(task)}
-                                </span>
-                              )}
-                            </div>
-                            <select
-                              className="mt-3 w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                              value={task.status}
-                              onChange={(event) =>
-                                updateTask(task.id, { status: event.target.value })
-                              }
-                              aria-label={`Move ${task.title}`}
-                            >
-                              <option value="TODO">To do</option>
-                              <option value="IN_PROGRESS">In progress</option>
-                              <option value="DONE">Done</option>
-                            </select>
-                          </article>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {tasks.map((task) => {
-              const overdue = isOverdue(task.dueDate, task.status);
-              const dueSoon = isDueSoon(task.dueDate, task.status);
-              const blocked = isTaskBlocked(task.blockedBy);
-              const checkInStale = isCheckInStale(task.lastCheckInAt, task.status);
-              const isMyTask = task.assignee?.id === currentUserId;
-
-              return (
-                <article
-                  key={task.id}
-                  className={`holo-card p-4 ${
-                    overdue
-                      ? "border-rose-500/40 bg-rose-950/20"
-                      : blocked
-                        ? "border-violet-500/30 bg-violet-950/10"
-                        : "border-slate-800 bg-slate-950/70"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-medium text-white">{task.title}</h3>
-                        {isPeerAssigned(task, currentUserId) && (
-                          <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-300">
-                            {peerFromLabel(task)}
-                          </span>
-                        )}
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColorClass(task.status)}`}
-                        >
-                          {statusLabel(task.status)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityColorClass(task.priority)}`}
-                        >
-                          {priorityLabel(task.priority)}
-                        </span>
-                        {blocked && (
-                          <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-300">
-                            Blocked
-                          </span>
-                        )}
-                        {overdue && (
-                          <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-xs font-medium text-rose-300">
-                            Overdue
-                          </span>
-                        )}
-                        {!overdue && dueSoon && (
-                          <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
-                            Due soon
-                          </span>
-                        )}
-                        {checkInStale && isMyTask && (
-                          <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
-                            Needs check-in
-                          </span>
-                        )}
-                        {task.archived && (
-                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-                            Archived
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-400">{task.project.title}</p>
-                      {task.description && (
-                        <p className="mt-2 text-sm text-slate-300">{task.description}</p>
-                      )}
-                      {task.definitionOfDone && (
-                        <p className="mt-2 text-sm text-emerald-200/90">
-                          <span className="font-medium text-emerald-300">Done when:</span>{" "}
-                          {task.definitionOfDone}
-                        </p>
-                      )}
-                      {task.checkInNote && (
-                        <p className="mt-2 text-sm text-slate-400">
-                          <span className="text-slate-500">Latest check-in:</span>{" "}
-                          {task.checkInNote}
-                          {task.lastCheckInAt
-                            ? ` · ${formatRelativeCheckIn(task.lastCheckInAt)}`
-                            : ""}
-                        </p>
-                      )}
-                      {task.blockedBy && (
-                        <p className="mt-2 text-xs text-violet-300/80">
-                          Blocked by: {task.blockedBy.title}
-                          {task.blockedBy.status === "DONE" ? " (done)" : ""}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {!task.archived && (
-                        <>
-                          <label className="sr-only" htmlFor={`status-${task.id}`}>
-                            Update status for {task.title}
-                          </label>
-                          <select
-                            id={`status-${task.id}`}
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                            value={task.status}
-                            onChange={(event) =>
-                              updateTask(task.id, { status: event.target.value })
-                            }
-                            aria-label={`Status for ${task.title}`}
-                          >
-                            <option value="TODO">To do</option>
-                            <option value="IN_PROGRESS">In progress</option>
-                            <option value="DONE">Done</option>
-                          </select>
-                          <label className="sr-only" htmlFor={`priority-${task.id}`}>
-                            Priority for {task.title}
-                          </label>
-                          <select
-                            id={`priority-${task.id}`}
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                            value={task.priority}
-                            onChange={(event) =>
-                              updateTask(task.id, { priority: event.target.value })
-                            }
-                            aria-label={`Priority for ${task.title}`}
-                          >
-                            <option value="LOW">Low</option>
-                            <option value="MEDIUM">Medium</option>
-                            <option value="HIGH">High</option>
-                          </select>
-                          <label className="sr-only" htmlFor={`blocker-${task.id}`}>
-                            Blocked by for {task.title}
-                          </label>
-                          <select
-                            id={`blocker-${task.id}`}
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                            value={task.blockedBy?.id ?? ""}
-                            onChange={(event) =>
-                              updateTask(task.id, {
-                                blockedById: event.target.value || null,
-                              })
-                            }
-                            aria-label={`Blocked by for ${task.title}`}
-                          >
-                            <option value="">Not blocked</option>
-                            {blockerOptionsForTask(task).map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {candidate.title}
-                              </option>
-                            ))}
-                          </select>
-                        </>
-                      )}
-                      {(!task.archived || task.project.ownerId === currentUserId) && (
-                        <>
-                          <label className="sr-only" htmlFor={`assignee-${task.id}`}>
-                            Assign {task.title}
-                          </label>
-                          <select
-                            id={`assignee-${task.id}`}
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                            value={task.assignee?.id ?? ""}
-                            onChange={(event) =>
-                              updateTask(task.id, {
-                                assigneeId: event.target.value || null,
-                              })
-                            }
-                            aria-label={`Assignee for ${task.title}`}
-                          >
-                            <option value="">Unassigned</option>
-                            {users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {assigneeLabel(user, currentUserId)}
-                              </option>
-                            ))}
-                          </select>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => archiveTask(task.id, !task.archived)}
-                        className="holo-btn-outline rounded-lg px-2 py-1 text-sm"
-                      >
-                        {task.archived ? "Restore task" : "Archive task"}
-                      </button>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {task.assignee ? assigneeLabel(task.assignee, currentUserId) : "Unassigned"}
-                    {task.dueDate ? ` · Due ${formatDueDate(task.dueDate)}` : ""}
+        </div>
+      }
+      overlay={
+        showCreateForm ? (
+          <>
+            <div
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              onClick={() => setShowCreateForm(false)}
+              aria-hidden="true"
+            />
+            <div className="fixed inset-x-3 top-20 z-50 md:inset-x-auto md:left-1/2 md:top-24 md:w-full md:max-w-lg md:-translate-x-1/2">
+              <article className="hud-projection-panel hud-scan-sweep p-5">
+                <header className="mb-4 flex items-center justify-between gap-2">
+                  <p className="jarvis-status-line">New task projection</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateForm(false)}
+                    className="hud-tile-btn text-xs"
+                  >
+                    Dismiss
+                  </button>
+                </header>
+                {createForm}
+                {error ? (
+                  <p className="mt-2 text-sm text-rose-400" role="alert">
+                    {error}
                   </p>
-                  {!task.archived && isMyTask && task.status === "IN_PROGRESS" && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <input
-                        className="min-w-[200px] flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm"
-                        placeholder="Standup check-in — what changed since yesterday?"
-                        value={checkInDrafts[task.id] ?? ""}
-                        onChange={(event) =>
-                          setCheckInDrafts((current) => ({
-                            ...current,
-                            [task.id]: event.target.value,
-                          }))
-                        }
-                        aria-label={`Check-in note for ${task.title}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void submitCheckIn(task)}
-                        disabled={!(checkInDrafts[task.id] ?? "").trim()}
-                        className="holo-btn-ghost rounded-lg px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Check in
-                      </button>
-                    </div>
+                ) : null}
+              </article>
+            </div>
+          </>
+        ) : null
+      }
+      fab={
+        <button
+          type="button"
+          className="holo-fab"
+          aria-label="Create task"
+          onClick={() => setShowCreateForm(true)}
+        >
+          +
+        </button>
+      }
+    >
+      {listError ? (
+        <div
+          className="mb-3 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
+          role="alert"
+        >
+          {listError}
+        </div>
+      ) : null}
+
+      {listLoading ? (
+        <div className="space-y-3" aria-live="polite" aria-busy="true">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-slate-900/50" />
+          ))}
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="hud-chip-compact mx-auto max-w-md text-center">
+          <p className="text-sm text-slate-400">
+            {showArchived
+              ? "No archived tasks."
+              : hasActiveFilters
+                ? "No tasks match these filters."
+                : "No tasks in orbit — tap + to add one."}
+          </p>
+        </div>
+      ) : viewMode === "hud" ? (
+        <TaskHudView
+          tasks={tasks}
+          users={users}
+          currentUserId={currentUserId}
+          checkInDrafts={checkInDrafts}
+          onCheckInDraftChange={(id, value) =>
+            setCheckInDrafts((current) => ({ ...current, [id]: value }))
+          }
+          onSubmitCheckIn={(task) => void submitCheckIn(task)}
+          onUpdateTask={(id, patch) => void updateTask(id, patch)}
+          onArchiveTask={(id, archived) => void archiveTask(id, archived)}
+          blockerOptionsForTask={blockerOptionsForTask}
+        />
+      ) : viewMode === "board" ? (
+        <div className="hud-board-orbit">
+          {TASK_STATUSES.map((column) => {
+            const columnTasks = tasks.filter((task) => task.status === column.value);
+            return (
+              <div key={column.value} className="hud-board-column">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">{column.label}</h3>
+                  <span className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs text-slate-400">
+                    {columnTasks.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {columnTasks.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-slate-700/60 px-2 py-4 text-center text-xs text-slate-500">
+                      Empty
+                    </p>
+                  ) : (
+                    columnTasks.map((task) => (
+                      <article key={task.id} className="hud-list-chip !min-w-0 !p-3">
+                        <h3 className="text-sm font-medium text-white">{task.title}</h3>
+                        <select
+                          className="mt-2 w-full rounded border border-slate-700/80 bg-slate-950/60 px-2 py-1 text-xs"
+                          value={task.status}
+                          onChange={(event) =>
+                            updateTask(task.id, { status: event.target.value })
+                          }
+                          aria-label={`Move ${task.title}`}
+                        >
+                          <option value="TODO">To do</option>
+                          <option value="IN_PROGRESS">In progress</option>
+                          <option value="DONE">Done</option>
+                        </select>
+                      </article>
+                    ))
                   )}
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="hud-list-strip">
+          {tasks.map((task) => (
+            <article key={task.id} className="hud-list-chip">
+              <h3 className="font-medium text-white">{task.title}</h3>
+              <p className="mt-1 text-xs text-violet-300/80">{task.project.title}</p>
+              <p className="mt-1 text-[10px] text-slate-500">
+                {task.assignee ? assigneeLabel(task.assignee, currentUserId) : "Unassigned"}
+              </p>
+              {!task.archived && (
+                <select
+                  className="mt-2 w-full rounded border border-slate-700/80 bg-slate-950/60 px-2 py-1 text-xs"
+                  value={task.status}
+                  onChange={(event) => updateTask(task.id, { status: event.target.value })}
+                  aria-label={`Status for ${task.title}`}
+                >
+                  <option value="TODO">To do</option>
+                  <option value="IN_PROGRESS">In progress</option>
+                  <option value="DONE">Done</option>
+                </select>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </HoloWorkspace>
   );
 }

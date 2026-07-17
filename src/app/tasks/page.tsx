@@ -37,10 +37,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   return (
     <AppShell userName={user.name}>
-      <div className="mb-4">
-        <p className="jarvis-status-line">Task orbit · cohort work queue</p>
-        <h1 className="holo-brand mt-1 text-2xl sm:text-3xl">Tasks HUD</h1>
-      </div>
       <TaskBoard
         initialTasks={tasks.map(serializeTask)}
         initialUsers={users}

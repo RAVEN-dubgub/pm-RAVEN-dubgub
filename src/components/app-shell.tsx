@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { HolographicThemeToggle } from "@/components/holographic-theme-toggle";
+import { HoloRingProvider } from "@/lib/holo-ring-context";
 import { dispatchHoloNavPick } from "@/lib/holo-route";
 
 type AppShellProps = {
@@ -34,6 +35,7 @@ export function AppShell({ userName, children }: AppShellProps) {
   }
 
   return (
+    <HoloRingProvider>
     <div className="min-h-screen">
       <a
         href="#main-content"
@@ -135,7 +137,7 @@ export function AppShell({ userName, children }: AppShellProps) {
         )}
       </header>
 
-      <main id="main-content" className="holo-viewport mx-auto max-w-[90rem] px-3 py-4 sm:px-5 sm:py-6">
+      <main id="main-content" className="holo-viewport holo-viewport-immersive mx-auto w-full max-w-[100rem] px-2 py-3 sm:px-4 sm:py-4">
         {children}
       </main>
 
@@ -160,5 +162,6 @@ export function AppShell({ userName, children }: AppShellProps) {
       </nav>
       <div className="h-14 md:hidden" aria-hidden="true" />
     </div>
+    </HoloRingProvider>
   );
 }

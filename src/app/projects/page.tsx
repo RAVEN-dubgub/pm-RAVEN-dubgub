@@ -17,10 +17,6 @@ export default async function ProjectsPage() {
 
   return (
     <AppShell userName={user.name}>
-      <div className="mb-4">
-        <p className="jarvis-status-line">Project constellation · cohort workspaces</p>
-        <h1 className="holo-brand mt-1 text-2xl sm:text-3xl">Projects HUD</h1>
-      </div>
       <ProjectManager
         initialProjects={initialProjects}
         currentUserId={user.id}

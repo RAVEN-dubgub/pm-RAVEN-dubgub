@@ -10,6 +10,8 @@ import { ArcGauge, HudWidget } from "@/components/hud-primitives";
 
 import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
 
+import { useHoloRingReadout } from "@/lib/holo-ring-context";
+
 type Project = {
   id: string;
 
@@ -368,29 +370,48 @@ export function ProjectHudLayout({
   }, [focus]);
 
   const orbitRadius = useMemo(
-    () => 180 + Math.min(Math.max(projects.length - 1, 0) * 16, 80),
+    () => 220 + Math.min(Math.max(projects.length - 1, 0) * 18, 100),
     [projects.length],
   );
 
-  if (projects.length === 0) return null;
+  const { setReadout } = useHoloRingReadout();
 
-  const sorted = [...projects].sort((a, b) => {
-    const aMine = a.owner.id === currentUserId ? 1 : 0;
-
-    const bMine = b.owner.id === currentUserId ? 1 : 0;
-
-    if (aMine !== bMine) return bMine - aMine;
-
-    const aProgress = projectProgress(a).progress;
-
-    const bProgress = projectProgress(b).progress;
-
-    return bProgress - aProgress;
-  });
+  const sorted = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const aMine = a.owner.id === currentUserId ? 1 : 0;
+      const bMine = b.owner.id === currentUserId ? 1 : 0;
+      if (aMine !== bMine) return bMine - aMine;
+      const aProgress = projectProgress(a).progress;
+      const bProgress = projectProgress(b).progress;
+      return bProgress - aProgress;
+    });
+  }, [projects, currentUserId]);
 
   const featured = sorted[0];
+  const satellites = sorted;
 
-  const satellites = sorted.slice(1);
+  useEffect(() => {
+    const target =
+      focusedId !== null
+        ? sorted.find((project) => project.id === focusedId) ?? featured
+        : featured;
+    if (!target) {
+      setReadout(null);
+      return;
+    }
+    const { progress } = projectProgress(target);
+    setReadout({
+      metric: `${progress}%`,
+      primary: target.title.length > 22 ? `${target.title.slice(0, 20)}…` : target.title,
+      secondary:
+        focusedId !== null
+          ? `${target.owner.name} · featured focus`
+          : `${sorted.length} project${sorted.length === 1 ? "" : "s"} in orbit`,
+    });
+    return () => setReadout(null);
+  }, [featured, focusedId, setReadout, sorted]);
+
+  if (projects.length === 0) return null;
 
   const moduleProps = {
     currentUserId,
@@ -420,66 +441,38 @@ export function ProjectHudLayout({
     >
       {/* Desktop orbital constellation */}
 
-      <div className="relative hidden min-h-[520px] lg:block">
-        <div className="hud-project-orbit-center">
-          <div className="hud-project-orbit-ring" aria-hidden="true" />
-
-          <ProjectHudModule
-            project={featured}
-
-            variant="featured"
-
-            focused={focusedId === featured.id}
-
-            dimmed={hasFocus && focusedId !== featured.id}
-
-            onSelect={() => toggle(featured.id)}
-
-            {...moduleProps}
-          />
-        </div>
-
+      <div className="relative hidden min-h-[520px] md:block">
         {satellites.map((project, index) => {
           const slot = orbitSlot(
             index,
             satellites.length,
             orbitRadius,
-            orbitRadius * 0.38,
+            orbitRadius * 0.42,
           );
 
+          const isFeatured = project.id === featured.id;
           const isFocused = focusedId === project.id;
-
           const isDimmed = hasFocus && !isFocused;
 
           return (
             <div
               key={project.id}
-
-              className="hud-project-satellite-orbit absolute w-[min(260px,24vw)]"
-
+              className={`hud-project-satellite-orbit absolute ${isFeatured ? "w-[min(300px,30vw)]" : "w-[min(260px,24vw)]"}`}
               style={{
                 left: `calc(50% + ${slot.x}px)`,
-
                 top: `calc(50% + ${slot.y}px)`,
-
                 transform: isFocused
                   ? "translate(-50%, -50%) scale(1.06) translateZ(32px)"
                   : "translate(-50%, -50%)",
-
-                zIndex: isFocused ? 25 : 5 + index,
+                zIndex: isFocused ? 25 : isFeatured ? 15 : 5 + index,
               }}
             >
               <ProjectHudModule
                 project={project}
-
-                variant="satellite"
-
+                variant={isFeatured ? "featured" : "satellite"}
                 focused={isFocused}
-
                 dimmed={isDimmed}
-
                 onSelect={() => toggle(project.id)}
-
                 {...moduleProps}
               />
             </div>
@@ -489,7 +482,7 @@ export function ProjectHudLayout({
 
       {/* Mobile / tablet fallback grid */}
 
-      <div className="grid gap-3 lg:hidden">
+      <div className="grid gap-3 md:hidden">
         {sorted.map((project) => {
           const isFocused = focusedId === project.id;
 
@@ -637,7 +630,7 @@ export function ProjectHudStats({
 
   return (
     <div
-      className={`hud-dashboard-grid mb-6 ${hasFocus ? "hud-dashboard-grid-focus" : ""}`}
+      className={`hud-project-stats-strip flex flex-wrap gap-2 ${hasFocus ? "opacity-80" : ""}`}
     >
       {widgets.map((widget) => (
         <HudWidget

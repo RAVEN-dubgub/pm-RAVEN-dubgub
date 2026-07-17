@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { HoloWorkspace } from "@/components/holo-workspace";
 import { ProjectHudLayout, ProjectHudStats } from "@/components/project-hud-layout";
+import { useHoloRingReadout } from "@/lib/holo-ring-context";
 
 type Project = {
   id: string;
@@ -29,6 +31,7 @@ export function ProjectManager({
   const [description, setDescription] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -110,6 +113,7 @@ export function ProjectManager({
       setTitle("");
       setDescription("");
       setShowArchived(false);
+      setShowCreateForm(false);
       await loadProjects();
     } finally {
       setIsCreating(false);
@@ -187,95 +191,94 @@ export function ProjectManager({
   const cohortCompletion =
     totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
   const weeklyUpdateCount = activeProjects.filter((p) => p.weeklyUpdate).length;
+  const { setReadout } = useHoloRingReadout();
+
+  useEffect(() => {
+    if (!showArchived && activeProjects.length === 0) {
+      setReadout({
+        metric: "—",
+        primary: "NO PROJECTS",
+        secondary: "tap + to create",
+      });
+      return () => setReadout(null);
+    }
+    if (showArchived && projects.length === 0) {
+      setReadout({
+        metric: 0,
+        primary: "ARCHIVED",
+        secondary: "none on file",
+      });
+      return () => setReadout(null);
+    }
+    return undefined;
+  }, [activeProjects.length, projects.length, setReadout, showArchived]);
+
+  const createForm = (
+    <form onSubmit={createProject} className="grid gap-3">
+      <label>
+        <span className="sr-only">Project title</span>
+        <input
+          className="holo-input w-full px-3 py-2"
+          placeholder="Project title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          required
+          disabled={isCreating}
+          aria-label="Project title"
+        />
+      </label>
+      <label>
+        <span className="sr-only">Description</span>
+        <textarea
+          className="holo-input w-full px-3 py-2"
+          placeholder="What is this project about? (optional)"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={2}
+          disabled={isCreating}
+          aria-label="Project description"
+        />
+      </label>
+      {createError ? (
+        <p className="text-sm text-rose-400" role="alert">
+          {createError}
+        </p>
+      ) : null}
+      <button
+        type="submit"
+        disabled={isCreating}
+        className="holo-btn-primary w-fit px-4 py-2 disabled:cursor-not-allowed"
+      >
+        {isCreating ? "Creating…" : "Create project"}
+      </button>
+    </form>
+  );
 
   return (
-    <div className="space-y-6">
-      {!showArchived && (
-        <ProjectHudStats
-          activeCount={activeProjects.length}
-          myCount={myActiveCount}
-          atRiskCount={atRiskCount}
-          weeklyUpdateCount={weeklyUpdateCount}
-          cohortCompletion={cohortCompletion}
-          doneTasks={doneTasks}
-          totalTasks={totalTasks}
-        />
-      )}
-
-      {showArchived && (
-        <section className="holo-panel holo-panel-featured holo-panel-featured-projects p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-xl">
-              <p className="text-xs font-medium uppercase tracking-wider text-fuchsia-300/80">
-                Archived projects
-              </p>
-              <h2 className="mt-1 text-xl font-semibold text-white">
-                {projects.length} archived workspace{projects.length === 1 ? "" : "s"}
-              </h2>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="holo-shimmer-border">
-        <section className="holo-shimmer-inner holo-panel-glass p-5">
-          <h2 className="mb-1 text-lg font-semibold">New project</h2>
-          <p className="mb-4 text-sm text-slate-400">
-            Every cohort member needs at least one project. Start here.
-          </p>
-          <form onSubmit={createProject} className="grid gap-3">
-            <label>
-              <span className="sr-only">Project title</span>
-              <input
-                className="holo-input w-full px-3 py-2"
-                placeholder="Project title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                aria-label="Project title"
-              />
-            </label>
-            <label>
-              <span className="sr-only">Description</span>
-              <textarea
-                className="holo-input w-full px-3 py-2"
-                placeholder="What is this project about? (optional)"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={2}
-                aria-label="Project description"
-              />
-            </label>
-            {createError ? (
-              <p className="text-sm text-rose-400" role="alert">
-                {createError}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="holo-btn-primary w-fit px-4 py-2 disabled:cursor-not-allowed"
-            >
-              {isCreating ? "Creating…" : "Create project"}
-            </button>
-          </form>
-        </section>
-      </div>
-
-      <section className="holo-panel holo-panel-glass p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">
-            Projects
-            {!loading && (
-              <span className="ml-2 text-sm font-normal text-slate-400">
-                ({activeProjects.length} active
-                {myActiveCount !== activeProjects.length
-                  ? ` · ${myActiveCount} yours`
-                  : ""}
-                )
-              </span>
-            )}
-          </h2>
+    <HoloWorkspace
+      top={
+        <div className="space-y-2">
+          <p className="jarvis-status-line">Project constellation · cohort workspaces</p>
+          {!showArchived && (
+            <ProjectHudStats
+              activeCount={activeProjects.length}
+              myCount={myActiveCount}
+              atRiskCount={atRiskCount}
+              weeklyUpdateCount={weeklyUpdateCount}
+              cohortCompletion={cohortCompletion}
+              doneTasks={doneTasks}
+              totalTasks={totalTasks}
+            />
+          )}
+        </div>
+      }
+      bottom={
+        <div className="holo-orbit-dock">
+          <span className="text-sm text-slate-400">
+            {showArchived
+              ? `${projects.length} archived`
+              : `${activeProjects.length} active${myActiveCount !== activeProjects.length ? ` · ${myActiveCount} yours` : ""}`}
+          </span>
           <label className="flex items-center gap-2 text-sm text-slate-400">
             <input
               type="checkbox"
@@ -285,63 +288,101 @@ export function ProjectManager({
             Show archived only
           </label>
         </div>
-
-        {error ? (
-          <div
-            className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
-            role="alert"
+      }
+      overlay={
+        showCreateForm ? (
+          <>
+            <div
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              onClick={() => setShowCreateForm(false)}
+              aria-hidden="true"
+            />
+            <div className="fixed inset-x-3 top-20 z-50 md:inset-x-auto md:left-1/2 md:top-24 md:w-full md:max-w-lg md:-translate-x-1/2">
+              <article className="hud-projection-panel hud-scan-sweep p-5">
+                <header className="mb-4 flex items-center justify-between gap-2">
+                  <p className="jarvis-status-line">New project projection</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateForm(false)}
+                    className="hud-tile-btn text-xs"
+                  >
+                    Dismiss
+                  </button>
+                </header>
+                {createForm}
+              </article>
+            </div>
+          </>
+        ) : null
+      }
+      fab={
+        !showArchived ? (
+          <button
+            type="button"
+            className="holo-fab"
+            aria-label="Create project"
+            onClick={() => setShowCreateForm(true)}
           >
-            {error}
-          </div>
-        ) : null}
+            +
+          </button>
+        ) : null
+      }
+    >
+      {error ? (
+        <div
+          className="mb-3 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
+          role="alert"
+        >
+          {error}
+        </div>
+      ) : null}
 
-        {loading ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {[1, 2].map((i) => (
-              <div key={i} className="holo-panel holo-panel-glass h-36 animate-pulse" />
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="holo-panel-glass rounded-xl border border-dashed border-slate-700/80 px-4 py-8 text-center">
-            <p className="text-sm text-slate-400">
-              {showArchived
-                ? "No archived projects."
-                : "No active projects yet — create one above to get started."}
-            </p>
-            {!showArchived && (
-              <>
-                <p className="mt-2 text-xs text-slate-500">
-                  Archived projects are hidden by default. Use &quot;Show archived
-                  only&quot; to find and restore them.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowArchived(true)}
-                  className="holo-text-link mt-4 text-sm"
-                >
-                  Check archived projects →
-                </button>
-              </>
-            )}
-          </div>
-        ) : (
-          <ProjectHudLayout
-            projects={projects}
-            currentUserId={currentUserId}
-            editingUpdateId={editingUpdateId}
-            weeklyUpdateDraft={weeklyUpdateDraft}
-            onStartWeeklyUpdateEdit={startWeeklyUpdateEdit}
-            onWeeklyUpdateDraftChange={setWeeklyUpdateDraft}
-            onSaveWeeklyUpdate={(project) => void saveWeeklyUpdate(project)}
-            onCancelWeeklyUpdate={() => {
-              setEditingUpdateId(null);
-              setWeeklyUpdateDraft("");
-            }}
-            onUpdateProject={(id, patch) => void updateProject(id, patch)}
-            onArchiveProject={(id, archived) => void archiveProject(id, archived)}
-          />
-        )}
-      </section>
-    </div>
+      {showArchived && projects.length > 0 && (
+        <p className="mb-3 text-center text-xs text-slate-500">
+          Archived workspaces · restore from each module
+        </p>
+      )}
+
+      {loading ? (
+        <div className="space-y-3" aria-live="polite" aria-busy="true">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-slate-900/50" />
+          ))}
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="hud-chip-compact mx-auto max-w-md text-center">
+          <p className="text-sm text-slate-400">
+            {showArchived
+              ? "No archived projects."
+              : "No active projects in orbit — tap + to create one."}
+          </p>
+          {!showArchived && (
+            <button
+              type="button"
+              onClick={() => setShowArchived(true)}
+              className="holo-text-link mt-3 text-sm"
+            >
+              Check archived projects →
+            </button>
+          )}
+        </div>
+      ) : (
+        <ProjectHudLayout
+          projects={projects}
+          currentUserId={currentUserId}
+          editingUpdateId={editingUpdateId}
+          weeklyUpdateDraft={weeklyUpdateDraft}
+          onStartWeeklyUpdateEdit={startWeeklyUpdateEdit}
+          onWeeklyUpdateDraftChange={setWeeklyUpdateDraft}
+          onSaveWeeklyUpdate={(project) => void saveWeeklyUpdate(project)}
+          onCancelWeeklyUpdate={() => {
+            setEditingUpdateId(null);
+            setWeeklyUpdateDraft("");
+          }}
+          onUpdateProject={(id, patch) => void updateProject(id, patch)}
+          onArchiveProject={(id, archived) => void archiveProject(id, archived)}
+        />
+      )}
+    </HoloWorkspace>
   );
 }
