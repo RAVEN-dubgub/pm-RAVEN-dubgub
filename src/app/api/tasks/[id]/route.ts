@@ -8,12 +8,14 @@ import { taskListInclude, validateBlocker } from "@/lib/tasks";
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(4000).optional().nullable(),
+  definitionOfDone: z.string().max(1000).optional().nullable(),
   status: z.nativeEnum(TaskStatus).optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
   archived: z.boolean().optional(),
   assigneeId: z.string().optional().nullable(),
   blockedById: z.string().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
+  checkInNote: z.string().max(500).optional().nullable(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -64,6 +66,10 @@ export async function PATCH(request: Request, context: RouteContext) {
           : parsed.data.dueDate
             ? new Date(parsed.data.dueDate)
             : null,
+      lastCheckInAt:
+        parsed.data.checkInNote !== undefined && parsed.data.checkInNote
+          ? new Date()
+          : undefined,
     },
     include: taskListInclude,
   });

@@ -100,6 +100,15 @@ Staff smoke account (`staff-review@hult-cohort.test`) projects appear muted at t
 - [x] **In-app help** — collapsible “How to use” on Dashboard (create project → task → assign peer → archive vs delete)
 - [x] Smoke/test projects de-emphasized in default project list (sorted last, muted styling)
 
+## Tier 2 features — PMP habits (Jul 2026)
+
+Inspired by [r/PMP community habits](https://www.reddit.com/r/pmp/) (proactive risk communication, standups, definition of done, weekly stakeholder updates):
+
+- [x] **At-risk project flag** — owners mark projects at risk; cohort dashboard surfaces flagged projects with status notes
+- [x] **Weekly cohort update** — project owners post a short weekly update (risks, blockers, next steps); dashboard nudges if stale > 7 days
+- [x] **Definition of done** — optional per-task completion criteria so “done” means outcome, not just activity
+- [x] **Standup check-in** — assignees on in-progress tasks log a quick check-in note; dashboard nudges if stale > 2 days
+
 ## Differentiating features
 
 - [x] Due dates on tasks
@@ -118,7 +127,8 @@ Research-backed UX (progress visibility, peer accountability, onboarding checkli
 - **Onboarding checklist** — 4-step setup guide for new cohort members (project → task → assign peer)
 - **Overdue alert banner** — framed as helping the cohort stay on track
 - **Project momentum panel** — per-project progress bars on the dashboard
-- **Next actions** — top 5 open assignments sorted by due date, with peer source when applicable
+- **PM habit nudges** — weekly update + standup check-in reminders on dashboard (r/PMP-inspired)
+- **At-risk projects panel** — visible early escalation for cohort stakeholders
 - **Status pills + due-soon badges** — clearer task scanning
 - **Empty states with CTAs** — no blank walls when projects/tasks are missing
 - **Mobile nav** — bottom tab bar + collapsible menu for small screens

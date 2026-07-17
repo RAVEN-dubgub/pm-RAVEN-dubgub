@@ -7,6 +7,8 @@ const updateSchema = z.object({
   title: z.string().min(1).max(120).optional(),
   description: z.string().max(2000).optional().nullable(),
   archived: z.boolean().optional(),
+  atRisk: z.boolean().optional(),
+  weeklyUpdate: z.string().max(2000).optional().nullable(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -57,9 +59,22 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
+  const data: {
+    title?: string;
+    description?: string | null;
+    archived?: boolean;
+    atRisk?: boolean;
+    weeklyUpdate?: string | null;
+    weeklyUpdateAt?: Date | null;
+  } = { ...parsed.data };
+
+  if (parsed.data.weeklyUpdate !== undefined) {
+    data.weeklyUpdateAt = parsed.data.weeklyUpdate ? new Date() : null;
+  }
+
   const project = await prisma.project.update({
     where: { id },
-    data: parsed.data,
+    data,
     include: {
       owner: { select: { id: true, name: true, email: true } },
       tasks: {

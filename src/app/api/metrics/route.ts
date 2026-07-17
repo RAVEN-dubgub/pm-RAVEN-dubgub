@@ -32,6 +32,9 @@ export async function GET() {
     peerOpenTaskRows,
     recentCompletionsRaw,
     peerAssignedTasksRaw,
+    atRiskProjectsRaw,
+    myOwnedProjectsRaw,
+    staleCheckInTasksRaw,
   ] = await Promise.all([
     prisma.project.count(),
     prisma.project.count({ where: { archived: false } }),
@@ -127,6 +130,45 @@ export async function GET() {
       orderBy: [{ status: "asc" }, { dueDate: "asc" }, { updatedAt: "desc" }],
       take: 10,
     }),
+    prisma.project.findMany({
+      where: { archived: false, atRisk: true },
+      select: {
+        id: true,
+        title: true,
+        weeklyUpdate: true,
+        weeklyUpdateAt: true,
+        owner: { select: { name: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    }),
+    prisma.project.findMany({
+      where: { ownerId: user.id, archived: false },
+      select: {
+        id: true,
+        title: true,
+        weeklyUpdate: true,
+        weeklyUpdateAt: true,
+        atRisk: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.task.findMany({
+      where: {
+        assigneeId: user.id,
+        status: "IN_PROGRESS",
+        ...activeTaskWhere,
+      },
+      select: {
+        id: true,
+        title: true,
+        checkInNote: true,
+        lastCheckInAt: true,
+        project: { select: { title: true } },
+      },
+      orderBy: [{ lastCheckInAt: "asc" }, { updatedAt: "desc" }],
+      take: 8,
+    }),
   ]);
 
   const completionRate = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
@@ -147,7 +189,22 @@ export async function GET() {
       done,
       total,
       progress: total === 0 ? 0 : Math.round((done / total) * 100),
+      atRisk: project.atRisk,
     };
+  });
+
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const checkInStaleMs = 2 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  const staleWeeklyUpdates = myOwnedProjectsRaw.filter((project) => {
+    if (!project.weeklyUpdateAt) return true;
+    return now - project.weeklyUpdateAt.getTime() > weekMs;
+  });
+
+  const staleCheckIns = staleCheckInTasksRaw.filter((task) => {
+    if (!task.lastCheckInAt) return true;
+    return now - task.lastCheckInAt.getTime() > checkInStaleMs;
   });
 
   const nextActions = await prisma.task.findMany({
@@ -218,8 +275,33 @@ export async function GET() {
       activeMembers,
       peersWithOpenTasks,
       peerAssignedUnstarted,
+      atRiskProjects: atRiskProjectsRaw.length,
+      staleWeeklyUpdates: staleWeeklyUpdates.length,
+      staleCheckIns: staleCheckIns.length,
     },
     projectProgress,
+    atRiskProjects: atRiskProjectsRaw.map((project) => ({
+      id: project.id,
+      title: project.title,
+      ownerName: project.owner.name,
+      weeklyUpdate: project.weeklyUpdate,
+      weeklyUpdateAt: project.weeklyUpdateAt?.toISOString() ?? null,
+    })),
+    habitNudges: {
+      staleWeeklyUpdates: staleWeeklyUpdates.map((project) => ({
+        id: project.id,
+        title: project.title,
+        weeklyUpdateAt: project.weeklyUpdateAt?.toISOString() ?? null,
+        atRisk: project.atRisk,
+      })),
+      staleCheckIns: staleCheckIns.map((task) => ({
+        id: task.id,
+        title: task.title,
+        projectTitle: task.project.title,
+        lastCheckInAt: task.lastCheckInAt?.toISOString() ?? null,
+        checkInNote: task.checkInNote,
+      })),
+    },
     nextActions: nextActions.map((task) => ({
       id: task.id,
       title: task.title,

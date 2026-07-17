@@ -8,6 +8,7 @@ import { listTasks, taskListInclude, type TaskListMode, validateBlocker } from "
 const taskSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(4000).optional(),
+  definitionOfDone: z.string().max(1000).optional(),
   status: z.nativeEnum(TaskStatus).optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
   projectId: z.string().min(1),
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
+      definitionOfDone: parsed.data.definitionOfDone,
       status: parsed.data.status ?? TaskStatus.TODO,
       priority: parsed.data.priority ?? TaskPriority.MEDIUM,
       projectId: parsed.data.projectId,

@@ -9,6 +9,9 @@ type Project = {
   title: string;
   description: string | null;
   archived: boolean;
+  atRisk: boolean;
+  weeklyUpdate: string | null;
+  weeklyUpdateAt: string | null;
   owner: { id?: string; name: string; email?: string };
   tasks: { status: string }[];
 };
@@ -30,6 +33,8 @@ export function ProjectManager({
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null);
+  const [weeklyUpdateDraft, setWeeklyUpdateDraft] = useState("");
   const skipInitialFetch = useRef(true);
 
   async function loadProjects() {
@@ -134,6 +139,40 @@ export function ProjectManager({
     }
 
     await loadProjects();
+  }
+
+  async function updateProject(
+    id: string,
+    patch: { atRisk?: boolean; weeklyUpdate?: string | null },
+  ) {
+    const response = await fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(patch),
+    });
+
+    if (!response.ok) {
+      setError("Could not update project. Please try again.");
+      return;
+    }
+
+    const data = await response.json();
+    const updated = data.project as Project;
+    setProjects((current) =>
+      current.map((project) => (project.id === id ? { ...project, ...updated } : project)),
+    );
+  }
+
+  async function saveWeeklyUpdate(project: Project) {
+    await updateProject(project.id, { weeklyUpdate: weeklyUpdateDraft.trim() || null });
+    setEditingUpdateId(null);
+    setWeeklyUpdateDraft("");
+  }
+
+  function startWeeklyUpdateEdit(project: Project) {
+    setEditingUpdateId(project.id);
+    setWeeklyUpdateDraft(project.weeklyUpdate ?? "");
   }
 
   const activeProjects = projects.filter((p) => !p.archived);
@@ -276,9 +315,16 @@ export function ProjectManager({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-medium text-white group-hover:text-cyan-50">
-                          {project.title}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium text-white group-hover:text-cyan-50">
+                            {project.title}
+                          </h3>
+                          {project.atRisk && !project.archived && (
+                            <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-300">
+                              At risk
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-400">
                           Owner: {project.owner.name}
                           {isMine ? " (you)" : ""}
@@ -317,7 +363,86 @@ export function ProjectManager({
                     </div>
                   </Link>
                   {isMine ? (
-                    <div className="border-t border-slate-800/80 px-4 pb-4 pt-2">
+                    <div className="space-y-3 border-t border-slate-800/80 px-4 pb-4 pt-3">
+                      {!project.archived && (
+                        <>
+                          <label className="flex items-center gap-2 text-sm text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={project.atRisk}
+                              onChange={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                void updateProject(project.id, {
+                                  atRisk: event.target.checked,
+                                });
+                              }}
+                              onClick={(event) => event.stopPropagation()}
+                            />
+                            Mark project at risk
+                          </label>
+                          <div onClick={(event) => event.stopPropagation()}>
+                            <p className="mb-1 text-xs font-medium text-slate-400">
+                              Weekly cohort update
+                            </p>
+                            {editingUpdateId === project.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+                                  rows={3}
+                                  placeholder="What changed this week? Risks, blockers, next steps for the cohort…"
+                                  value={weeklyUpdateDraft}
+                                  onChange={(event) =>
+                                    setWeeklyUpdateDraft(event.target.value)
+                                  }
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => void saveWeeklyUpdate(project)}
+                                    className="rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+                                  >
+                                    Save update
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingUpdateId(null);
+                                      setWeeklyUpdateDraft("");
+                                    }}
+                                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:text-white"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {project.weeklyUpdate ? (
+                                  <p className="text-sm text-slate-300">{project.weeklyUpdate}</p>
+                                ) : (
+                                  <p className="text-sm italic text-slate-500">
+                                    No weekly update posted yet
+                                  </p>
+                                )}
+                                {project.weeklyUpdateAt && (
+                                  <p className="text-xs text-slate-500">
+                                    Updated{" "}
+                                    {new Date(project.weeklyUpdateAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => startWeeklyUpdateEdit(project)}
+                                  className="text-sm text-cyan-400 hover:text-cyan-300"
+                                >
+                                  {project.weeklyUpdate ? "Edit update" : "Post weekly update"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={(event) => {
@@ -329,6 +454,11 @@ export function ProjectManager({
                       >
                         {project.archived ? "Restore project" : "Archive project"}
                       </button>
+                    </div>
+                  ) : project.weeklyUpdate ? (
+                    <div className="border-t border-slate-800/80 px-4 pb-4 pt-3">
+                      <p className="text-xs font-medium text-slate-400">Weekly update</p>
+                      <p className="mt-1 text-sm text-slate-300">{project.weeklyUpdate}</p>
                     </div>
                   ) : null}
                 </article>

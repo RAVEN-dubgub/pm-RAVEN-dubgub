@@ -78,3 +78,36 @@ export function formatDueDate(dueDate: string | Date) {
     year: "numeric",
   });
 }
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+export function isWeeklyUpdateStale(
+  weeklyUpdateAt: string | Date | null,
+  archived = false,
+) {
+  if (archived) return false;
+  if (!weeklyUpdateAt) return true;
+  const updated =
+    typeof weeklyUpdateAt === "string" ? new Date(weeklyUpdateAt) : weeklyUpdateAt;
+  return Date.now() - updated.getTime() > 7 * MS_PER_DAY;
+}
+
+export function isCheckInStale(
+  lastCheckInAt: string | Date | null,
+  status: TaskStatus,
+) {
+  if (status !== "IN_PROGRESS") return false;
+  if (!lastCheckInAt) return true;
+  const checkedIn =
+    typeof lastCheckInAt === "string" ? new Date(lastCheckInAt) : lastCheckInAt;
+  return Date.now() - checkedIn.getTime() > 2 * MS_PER_DAY;
+}
+
+export function formatRelativeCheckIn(iso: string | Date | null) {
+  if (!iso) return "Never checked in";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffDays = Math.floor(diffMs / MS_PER_DAY);
+  if (diffDays === 0) return "Checked in today";
+  if (diffDays === 1) return "Checked in yesterday";
+  return `Last check-in ${diffDays}d ago`;
+}

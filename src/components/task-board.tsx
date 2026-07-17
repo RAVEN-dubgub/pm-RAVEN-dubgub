@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatDueDate,
+  formatRelativeCheckIn,
+  isCheckInStale,
   isDueSoon,
   isOverdue,
   isTaskBlocked,
@@ -22,10 +24,13 @@ type TaskItem = {
   id: string;
   title: string;
   description: string | null;
+  definitionOfDone: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE";
   priority: "LOW" | "MEDIUM" | "HIGH";
   archived: boolean;
   dueDate: string | null;
+  checkInNote: string | null;
+  lastCheckInAt: string | null;
   project: { id: string; title: string; ownerId: string; owner: ProjectOwner };
   assignee: UserOption | null;
   blockedBy: BlockerRef | null;
@@ -85,9 +90,11 @@ export function TaskBoard({
   const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [blockedById, setBlockedById] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [definitionOfDone, setDefinitionOfDone] = useState("");
   const [error, setError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(true);
+  const [checkInDrafts, setCheckInDrafts] = useState<Record<string, string>>({});
   const skipInitialFetch = useRef(true);
 
   const hasActiveFilters = Boolean(
@@ -177,6 +184,7 @@ export function TaskBoard({
         body: JSON.stringify({
           title,
           description: description || undefined,
+          definitionOfDone: definitionOfDone || undefined,
           projectId,
           assigneeId: assigneeId || null,
           priority,
@@ -196,6 +204,7 @@ export function TaskBoard({
 
       setTitle("");
       setDescription("");
+      setDefinitionOfDone("");
       setDueDate("");
       setAssigneeId("");
       setBlockedById("");
@@ -259,6 +268,17 @@ export function TaskBoard({
     setTasks((current) =>
       current.map((task) => (task.id === id ? updatedTask : task)),
     );
+  }
+
+  async function submitCheckIn(task: TaskItem) {
+    const note = (checkInDrafts[task.id] ?? "").trim();
+    if (!note) return;
+    await updateTask(task.id, { checkInNote: note });
+    setCheckInDrafts((current) => {
+      const next = { ...current };
+      delete next[task.id];
+      return next;
+    });
   }
 
   async function archiveTask(id: string, archived: boolean) {
@@ -347,6 +367,17 @@ export function TaskBoard({
                 rows={2}
                 disabled={isCreating}
                 aria-label="Task description"
+              />
+            </label>
+            <label className="md:col-span-2">
+              <span className="mb-1 block text-xs text-slate-400">Definition of done</span>
+              <input
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                placeholder="How will the cohort know this is truly complete?"
+                value={definitionOfDone}
+                onChange={(event) => setDefinitionOfDone(event.target.value)}
+                disabled={isCreating}
+                aria-label="Definition of done"
               />
             </label>
             <label>
@@ -702,6 +733,8 @@ export function TaskBoard({
               const overdue = isOverdue(task.dueDate, task.status);
               const dueSoon = isDueSoon(task.dueDate, task.status);
               const blocked = isTaskBlocked(task.blockedBy);
+              const checkInStale = isCheckInStale(task.lastCheckInAt, task.status);
+              const isMyTask = task.assignee?.id === currentUserId;
 
               return (
                 <article
@@ -748,6 +781,11 @@ export function TaskBoard({
                             Due soon
                           </span>
                         )}
+                        {checkInStale && isMyTask && (
+                          <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
+                            Needs check-in
+                          </span>
+                        )}
                         {task.archived && (
                           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
                             Archived
@@ -757,6 +795,21 @@ export function TaskBoard({
                       <p className="text-sm text-slate-400">{task.project.title}</p>
                       {task.description && (
                         <p className="mt-2 text-sm text-slate-300">{task.description}</p>
+                      )}
+                      {task.definitionOfDone && (
+                        <p className="mt-2 text-sm text-emerald-200/90">
+                          <span className="font-medium text-emerald-300">Done when:</span>{" "}
+                          {task.definitionOfDone}
+                        </p>
+                      )}
+                      {task.checkInNote && (
+                        <p className="mt-2 text-sm text-slate-400">
+                          <span className="text-slate-500">Latest check-in:</span>{" "}
+                          {task.checkInNote}
+                          {task.lastCheckInAt
+                            ? ` · ${formatRelativeCheckIn(task.lastCheckInAt)}`
+                            : ""}
+                        </p>
                       )}
                       {task.blockedBy && (
                         <p className="mt-2 text-xs text-violet-300/80">
@@ -857,6 +910,30 @@ export function TaskBoard({
                     {task.assignee ? assigneeLabel(task.assignee, currentUserId) : "Unassigned"}
                     {task.dueDate ? ` · Due ${formatDueDate(task.dueDate)}` : ""}
                   </p>
+                  {!task.archived && isMyTask && task.status === "IN_PROGRESS" && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <input
+                        className="min-w-[200px] flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm"
+                        placeholder="Standup check-in — what changed since yesterday?"
+                        value={checkInDrafts[task.id] ?? ""}
+                        onChange={(event) =>
+                          setCheckInDrafts((current) => ({
+                            ...current,
+                            [task.id]: event.target.value,
+                          }))
+                        }
+                        aria-label={`Check-in note for ${task.title}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void submitCheckIn(task)}
+                        disabled={!(checkInDrafts[task.id] ?? "").trim()}
+                        className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Check in
+                      </button>
+                    </div>
+                  )}
                 </article>
               );
             })}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HowToUse } from "@/components/how-to-use";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
-import { formatDueDate, isOverdue, statusLabel } from "@/lib/types";
+import { formatDueDate, formatRelativeCheckIn, isOverdue, statusLabel } from "@/lib/types";
 
 type Metrics = {
   totalProjects: number;
@@ -20,6 +20,9 @@ type Metrics = {
   activeMembers: number;
   peersWithOpenTasks: number;
   peerAssignedUnstarted: number;
+  atRiskProjects: number;
+  staleWeeklyUpdates: number;
+  staleCheckIns: number;
 };
 
 type ProjectProgress = {
@@ -28,6 +31,7 @@ type ProjectProgress = {
   done: number;
   total: number;
   progress: number;
+  atRisk?: boolean;
 };
 
 type NextAction = {
@@ -63,6 +67,30 @@ type Onboarding = {
   otherCohortMembers?: number;
   completedSteps: number;
   totalSteps: number;
+};
+
+type AtRiskProject = {
+  id: string;
+  title: string;
+  ownerName: string;
+  weeklyUpdate: string | null;
+  weeklyUpdateAt: string | null;
+};
+
+type HabitNudges = {
+  staleWeeklyUpdates: {
+    id: string;
+    title: string;
+    weeklyUpdateAt: string | null;
+    atRisk: boolean;
+  }[];
+  staleCheckIns: {
+    id: string;
+    title: string;
+    projectTitle: string;
+    lastCheckInAt: string | null;
+    checkInNote: string | null;
+  }[];
 };
 
 type TasksByStatus = {
@@ -165,6 +193,8 @@ export function DashboardMetrics() {
   const [recentCompletions, setRecentCompletions] = useState<RecentCompletion[]>([]);
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
   const [tasksByStatus, setTasksByStatus] = useState<TasksByStatus | null>(null);
+  const [atRiskProjects, setAtRiskProjects] = useState<AtRiskProject[]>([]);
+  const [habitNudges, setHabitNudges] = useState<HabitNudges | null>(null);
 
   useEffect(() => {
     fetch("/api/metrics")
@@ -177,6 +207,8 @@ export function DashboardMetrics() {
         setRecentCompletions(data.recentCompletions ?? []);
         setOnboarding(data.onboarding);
         setTasksByStatus(data.tasksByStatus ?? null);
+        setAtRiskProjects(data.atRiskProjects ?? []);
+        setHabitNudges(data.habitNudges ?? null);
       });
   }, []);
 
@@ -262,6 +294,105 @@ export function DashboardMetrics() {
             View tasks
           </Link>
         </div>
+      )}
+
+      {habitNudges &&
+        (habitNudges.staleWeeklyUpdates.length > 0 ||
+          habitNudges.staleCheckIns.length > 0) && (
+          <section
+            aria-labelledby="pm-habits-heading"
+            className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5"
+          >
+            <h2 id="pm-habits-heading" className="text-lg font-semibold text-amber-100">
+              PM habit nudges
+            </h2>
+            <p className="mt-1 text-sm text-amber-200/80">
+              Inspired by r/PMP: update risks early, check in on active work, post weekly
+              stakeholder updates.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {habitNudges.staleWeeklyUpdates.map((project) => (
+                <li
+                  key={`weekly-${project.id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-slate-950/50 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-white">
+                      Post weekly update: {project.title}
+                    </p>
+                    <p className="text-slate-400">
+                      {project.weeklyUpdateAt
+                        ? `Last update ${formatRelativeTime(project.weeklyUpdateAt)}`
+                        : "No cohort update posted yet"}
+                      {project.atRisk ? " · marked at risk" : ""}
+                    </p>
+                  </div>
+                  <Link
+                    href="/projects"
+                    className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
+                  >
+                    Update project
+                  </Link>
+                </li>
+              ))}
+              {habitNudges.staleCheckIns.map((task) => (
+                <li
+                  key={`checkin-${task.id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-slate-950/50 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-white">Standup check-in: {task.title}</p>
+                    <p className="text-slate-400">
+                      {task.projectTitle} · {formatRelativeCheckIn(task.lastCheckInAt)}
+                    </p>
+                  </div>
+                  <Link
+                    href="/tasks"
+                    className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
+                  >
+                    Check in
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+      {atRiskProjects.length > 0 && (
+        <section
+          aria-labelledby="at-risk-heading"
+          className="rounded-2xl border border-orange-500/40 bg-orange-950/25 p-5"
+        >
+          <h2 id="at-risk-heading" className="text-lg font-semibold text-orange-100">
+            At-risk projects
+          </h2>
+          <p className="mt-1 text-sm text-orange-200/80">
+            Cohort projects flagged before issues become blockers — escalate early, not late.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {atRiskProjects.map((project) => (
+              <li
+                key={project.id}
+                className="rounded-xl border border-orange-500/25 bg-slate-950/50 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-white">{project.title}</p>
+                    <p className="text-orange-200/80">Owner: {project.ownerName}</p>
+                  </div>
+                  <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-200">
+                    At risk
+                  </span>
+                </div>
+                {project.weeklyUpdate ? (
+                  <p className="mt-2 text-slate-300">{project.weeklyUpdate}</p>
+                ) : (
+                  <p className="mt-2 text-slate-500 italic">No status note yet</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <section
@@ -500,7 +631,14 @@ export function DashboardMetrics() {
             {projectProgress.map((project) => (
               <li key={project.id}>
                 <div className="mb-1 flex justify-between text-sm">
-                  <span className="font-medium text-white">{project.title}</span>
+                  <span className="flex items-center gap-2 font-medium text-white">
+                    {project.title}
+                    {project.atRisk && (
+                      <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-300">
+                        At risk
+                      </span>
+                    )}
+                  </span>
                   <span className="text-slate-400">
                     {project.done}/{project.total} · {project.progress}%
                   </span>

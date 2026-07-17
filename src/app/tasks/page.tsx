@@ -14,6 +14,7 @@ function serializeTask(
   return {
     ...task,
     dueDate: task.dueDate?.toISOString() ?? null,
+    lastCheckInAt: task.lastCheckInAt?.toISOString() ?? null,
   };
 }
 

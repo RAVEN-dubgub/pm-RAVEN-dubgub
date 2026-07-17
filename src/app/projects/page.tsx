@@ -10,7 +10,10 @@ export default async function ProjectsPage() {
   const user = await requireUser();
   if (!user) redirect("/login");
 
-  const initialProjects = await listProjects("active");
+  const initialProjects = (await listProjects("active")).map((project) => ({
+    ...project,
+    weeklyUpdateAt: project.weeklyUpdateAt?.toISOString() ?? null,
+  }));
 
   return (
     <AppShell userName={user.name}>

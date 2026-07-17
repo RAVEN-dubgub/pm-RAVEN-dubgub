@@ -12,6 +12,8 @@ const projectListInclude = {
   _count: { select: { tasks: true } },
 } as const;
 
+export type ProjectListItem = Awaited<ReturnType<typeof listProjects>>[number];
+
 export function projectListWhere(mode: ProjectListMode) {
   return mode === "archived" ? { archived: true } : { archived: false };
 }
