@@ -32,7 +32,7 @@ export function HowToUse() {
   return (
     <section
       aria-labelledby="how-to-use-heading"
-      className="rounded-2xl border border-slate-800 bg-slate-900/60"
+      className="holo-panel"
     >
       <button
         type="button"
@@ -48,11 +48,11 @@ export function HowToUse() {
             Quick guide for cohort members and graders.
           </p>
         </div>
-        <span className="shrink-0 text-sm text-cyan-400">{open ? "Hide" : "Show"}</span>
+        <span className="holo-text-link shrink-0 text-sm">{open ? "Hide" : "Show"}</span>
       </button>
 
       {open && (
-        <div className="border-t border-slate-800 px-5 pb-5 pt-4">
+        <div className="border-t border-cyan-500/10 px-5 pb-5 pt-4">
           <ol className="space-y-4">
             {STEPS.map((step, index) => (
               <li key={step.title} className="flex gap-3">
@@ -67,7 +67,7 @@ export function HowToUse() {
                   <p className="mt-1 text-sm text-slate-400">{step.body}</p>
                   <Link
                     href={step.href}
-                    className="mt-2 inline-block text-sm text-cyan-400 hover:text-cyan-300"
+                    className="holo-text-link mt-2 inline-block text-sm"
                   >
                     Open {step.href.replace("/", "")} →
                   </Link>
@@ -79,7 +79,7 @@ export function HowToUse() {
             Live URL:{" "}
             <a
               href="https://pm-raven-dubgub.vercel.app"
-              className="text-cyan-400 hover:text-cyan-300"
+              className="holo-text-link"
               target="_blank"
               rel="noopener noreferrer"
             >

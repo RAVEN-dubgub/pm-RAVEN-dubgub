@@ -48,7 +48,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <label className="block text-sm">
           <span className="mb-1 block text-slate-300">Name</span>
           <input
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+            className="holo-input w-full px-3 py-2"
             value={name}
             onChange={(event) => setName(event.target.value)}
             required
@@ -59,7 +59,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <span className="mb-1 block text-slate-300">Email</span>
         <input
           type="email"
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+          className="holo-input w-full px-3 py-2"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -69,7 +69,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <span className="mb-1 block text-slate-300">Password</span>
         <input
           type="password"
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
+          className="holo-input w-full px-3 py-2"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           minLength={8}
@@ -80,7 +80,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400 disabled:opacity-60"
+        className="holo-btn-primary w-full px-4 py-2 disabled:cursor-not-allowed"
       >
         {loading ? "Working..." : mode === "login" ? "Sign in" : "Create account"}
       </button>

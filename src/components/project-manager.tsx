@@ -182,7 +182,7 @@ export function ProjectManager({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <section className="holo-panel p-5">
         <h2 className="mb-1 text-lg font-semibold">New project</h2>
         <p className="mb-4 text-sm text-slate-400">
           Every cohort member needs at least one project. Start here.
@@ -191,7 +191,7 @@ export function ProjectManager({
           <label>
             <span className="sr-only">Project title</span>
             <input
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              className="holo-input w-full px-3 py-2"
               placeholder="Project title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -202,7 +202,7 @@ export function ProjectManager({
           <label>
             <span className="sr-only">Description</span>
             <textarea
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              className="holo-input w-full px-3 py-2"
               placeholder="What is this project about? (optional)"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -218,14 +218,14 @@ export function ProjectManager({
           <button
             type="submit"
             disabled={isCreating}
-            className="w-fit rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="holo-btn-primary w-fit px-4 py-2 disabled:cursor-not-allowed"
           >
             {isCreating ? "Creating…" : "Create project"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <section className="holo-panel p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">
             Projects
@@ -280,7 +280,7 @@ export function ProjectManager({
                 <button
                   type="button"
                   onClick={() => setShowArchived(true)}
-                  className="mt-4 text-sm text-cyan-400 hover:text-cyan-300"
+                  className="holo-text-link mt-4 text-sm"
                 >
                   Check archived projects →
                 </button>
@@ -304,8 +304,8 @@ export function ProjectManager({
               return (
                 <article
                   key={project.id}
-                  className={`group rounded-xl border bg-slate-950/70 transition-colors hover:border-cyan-500/40 hover:bg-slate-900/90 has-[:focus-visible]:border-cyan-500/50 ${
-                    isSmoke ? "border-slate-800/60 opacity-70" : "border-slate-800"
+                  className={`group holo-card bg-slate-950/70 transition-colors has-[:focus-visible]:border-cyan-500/50 ${
+                    isSmoke ? "border-slate-800/60 opacity-70" : ""
                   }`}
                 >
                   <Link
@@ -400,7 +400,7 @@ export function ProjectManager({
                                   <button
                                     type="button"
                                     onClick={() => void saveWeeklyUpdate(project)}
-                                    className="rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+                                    className="holo-btn-primary px-3 py-1.5 text-sm"
                                   >
                                     Save update
                                   </button>
@@ -410,7 +410,7 @@ export function ProjectManager({
                                       setEditingUpdateId(null);
                                       setWeeklyUpdateDraft("");
                                     }}
-                                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:text-white"
+                                    className="holo-btn-outline px-3 py-1.5 text-sm"
                                   >
                                     Cancel
                                   </button>
@@ -434,7 +434,7 @@ export function ProjectManager({
                                 <button
                                   type="button"
                                   onClick={() => startWeeklyUpdateEdit(project)}
-                                  className="text-sm text-cyan-400 hover:text-cyan-300"
+                                  className="holo-text-link text-sm"
                                 >
                                   {project.weeklyUpdate ? "Edit update" : "Post weekly update"}
                                 </button>

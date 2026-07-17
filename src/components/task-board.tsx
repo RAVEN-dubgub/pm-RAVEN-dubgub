@@ -314,14 +314,14 @@ export function TaskBoard({
 
   if (projects.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 px-6 py-12 text-center">
+      <div className="holo-panel border-dashed px-6 py-12 text-center">
         <h2 className="text-lg font-semibold text-white">No projects yet</h2>
         <p className="mt-2 text-sm text-slate-400">
           Create a project first, then add tasks and assign them to cohort peers.
         </p>
         <Link
           href="/projects"
-          className="mt-4 inline-block rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+          className="holo-btn-primary mt-4 inline-block px-4 py-2 text-sm"
         >
           Create your first project
         </Link>
@@ -331,7 +331,7 @@ export function TaskBoard({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <section className="holo-panel p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Create task</h2>
           <button
@@ -348,7 +348,7 @@ export function TaskBoard({
             <label className="md:col-span-2">
               <span className="sr-only">Task title</span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 placeholder="Task title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
@@ -360,7 +360,7 @@ export function TaskBoard({
             <label className="md:col-span-2">
               <span className="sr-only">Description</span>
               <textarea
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 placeholder="Description (optional)"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
@@ -372,7 +372,7 @@ export function TaskBoard({
             <label className="md:col-span-2">
               <span className="mb-1 block text-xs text-slate-400">Definition of done</span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 placeholder="How will the cohort know this is truly complete?"
                 value={definitionOfDone}
                 onChange={(event) => setDefinitionOfDone(event.target.value)}
@@ -383,7 +383,7 @@ export function TaskBoard({
             <label>
               <span className="mb-1 block text-xs text-slate-400">Project</span>
               <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 value={projectId}
                 onChange={(event) => {
                   setProjectId(event.target.value);
@@ -404,7 +404,7 @@ export function TaskBoard({
             <label>
               <span className="mb-1 block text-xs text-slate-400">Priority</span>
               <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 value={priority}
                 onChange={(event) =>
                   setPriority(event.target.value as "LOW" | "MEDIUM" | "HIGH")
@@ -420,7 +420,7 @@ export function TaskBoard({
             <label>
               <span className="mb-1 block text-xs text-slate-400">Assignee</span>
               <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 value={assigneeId}
                 onChange={(event) => setAssigneeId(event.target.value)}
                 disabled={isCreating}
@@ -440,7 +440,7 @@ export function TaskBoard({
             <label>
               <span className="mb-1 block text-xs text-slate-400">Blocked by</span>
               <select
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 value={blockedById}
                 onChange={(event) => setBlockedById(event.target.value)}
                 disabled={isCreating || !projectId}
@@ -458,7 +458,7 @@ export function TaskBoard({
               <span className="mb-1 block text-xs text-slate-400">Due date</span>
               <input
                 type="date"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                className="holo-input w-full px-3 py-2"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
                 disabled={isCreating}
@@ -468,7 +468,7 @@ export function TaskBoard({
             <button
               type="submit"
               disabled={isCreating}
-              className="rounded-lg bg-cyan-500 px-4 py-2 font-medium text-slate-950 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60 md:self-end"
+              className="holo-btn-primary rounded-lg px-4 py-2 disabled:cursor-not-allowed md:self-end"
             >
               {isCreating ? "Adding…" : "Add task"}
             </button>
@@ -481,7 +481,7 @@ export function TaskBoard({
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <section className="holo-panel p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-lg font-semibold">
@@ -491,18 +491,14 @@ export function TaskBoard({
               </span>
             </h2>
             <div
-              className="inline-flex rounded-lg border border-slate-700 bg-slate-950 p-0.5"
+              className="holo-picker"
               role="group"
               aria-label="View mode"
             >
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`rounded-md px-3 py-1 text-sm ${
-                  viewMode === "list"
-                    ? "bg-cyan-500/20 text-cyan-300"
-                    : "text-slate-400 hover:text-white"
-                }`}
+                className={`holo-picker-item ${viewMode === "list" ? "holo-picker-item-active" : ""}`}
                 aria-pressed={viewMode === "list"}
               >
                 List
@@ -510,11 +506,7 @@ export function TaskBoard({
               <button
                 type="button"
                 onClick={() => setViewMode("board")}
-                className={`rounded-md px-3 py-1 text-sm ${
-                  viewMode === "board"
-                    ? "bg-cyan-500/20 text-cyan-300"
-                    : "text-slate-400 hover:text-white"
-                }`}
+                className={`holo-picker-item ${viewMode === "board" ? "holo-picker-item-active" : ""}`}
                 aria-pressed={viewMode === "board"}
               >
                 Board
@@ -534,7 +526,7 @@ export function TaskBoard({
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-sm text-cyan-400 hover:text-cyan-300"
+                className="holo-text-link text-sm"
               >
                 Clear filters
               </button>
@@ -680,7 +672,7 @@ export function TaskBoard({
                         return (
                           <article
                             key={task.id}
-                            className={`rounded-xl border p-3 text-sm ${
+                            className={`holo-card p-3 text-sm ${
                               overdue
                                 ? "border-rose-500/40 bg-rose-950/20"
                                 : blocked
@@ -739,7 +731,7 @@ export function TaskBoard({
               return (
                 <article
                   key={task.id}
-                  className={`rounded-xl border p-4 ${
+                  className={`holo-card p-4 ${
                     overdue
                       ? "border-rose-500/40 bg-rose-950/20"
                       : blocked
@@ -853,27 +845,6 @@ export function TaskBoard({
                             <option value="MEDIUM">Medium</option>
                             <option value="HIGH">High</option>
                           </select>
-                          <label className="sr-only" htmlFor={`assignee-${task.id}`}>
-                            Assign {task.title}
-                          </label>
-                          <select
-                            id={`assignee-${task.id}`}
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                            value={task.assignee?.id ?? ""}
-                            onChange={(event) =>
-                              updateTask(task.id, {
-                                assigneeId: event.target.value || null,
-                              })
-                            }
-                            aria-label={`Assignee for ${task.title}`}
-                          >
-                            <option value="">Unassigned</option>
-                            {users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {assigneeLabel(user, currentUserId)}
-                              </option>
-                            ))}
-                          </select>
                           <label className="sr-only" htmlFor={`blocker-${task.id}`}>
                             Blocked by for {task.title}
                           </label>
@@ -897,10 +868,35 @@ export function TaskBoard({
                           </select>
                         </>
                       )}
+                      {(!task.archived || task.project.ownerId === currentUserId) && (
+                        <>
+                          <label className="sr-only" htmlFor={`assignee-${task.id}`}>
+                            Assign {task.title}
+                          </label>
+                          <select
+                            id={`assignee-${task.id}`}
+                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+                            value={task.assignee?.id ?? ""}
+                            onChange={(event) =>
+                              updateTask(task.id, {
+                                assigneeId: event.target.value || null,
+                              })
+                            }
+                            aria-label={`Assignee for ${task.title}`}
+                          >
+                            <option value="">Unassigned</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {assigneeLabel(user, currentUserId)}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={() => archiveTask(task.id, !task.archived)}
-                        className="rounded-lg border border-slate-700 px-2 py-1 text-sm text-slate-400 hover:text-white"
+                        className="holo-btn-outline rounded-lg px-2 py-1 text-sm"
                       >
                         {task.archived ? "Restore task" : "Archive task"}
                       </button>
@@ -928,7 +924,7 @@ export function TaskBoard({
                         type="button"
                         onClick={() => void submitCheckIn(task)}
                         disabled={!(checkInDrafts[task.id] ?? "").trim()}
-                        className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="holo-btn-ghost rounded-lg px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Check in
                       </button>

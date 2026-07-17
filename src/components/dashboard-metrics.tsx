@@ -65,6 +65,7 @@ type Onboarding = {
   hasTask: boolean;
   hasAssignment: boolean;
   otherCohortMembers?: number;
+  needsActiveOwnedProject?: boolean;
   completedSteps: number;
   totalSteps: number;
 };
@@ -215,7 +216,7 @@ export function DashboardMetrics() {
   if (!metrics) {
     return (
       <div className="space-y-4" aria-live="polite" aria-busy="true">
-        <div className="h-40 animate-pulse rounded-2xl bg-slate-900" />
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-900/80" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-900" />
@@ -274,7 +275,7 @@ export function DashboardMetrics() {
           </p>
           <Link
             href="/tasks"
-            className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30"
+            className="rounded-lg holo-btn-ghost px-3 py-1.5 text-sm"
           >
             Start now
           </Link>
@@ -397,7 +398,7 @@ export function DashboardMetrics() {
 
       <section
         aria-labelledby="cohort-momentum-heading"
-        className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-950/50 via-slate-900 to-slate-950 p-6"
+        className="holo-panel holo-panel-featured p-6"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-xl">
@@ -449,7 +450,7 @@ export function DashboardMetrics() {
       {tasksByStatus && (
         <section
           aria-labelledby="status-chart-heading"
-          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+          className="holo-panel p-5"
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 id="status-chart-heading" className="text-lg font-semibold text-white">
@@ -470,7 +471,7 @@ export function DashboardMetrics() {
 
       <section
         aria-labelledby="your-contribution-heading"
-        className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-5"
+        className="holo-panel p-5"
       >
         <h2 id="your-contribution-heading" className="text-lg font-semibold text-white">
           Your contribution
@@ -502,7 +503,7 @@ export function DashboardMetrics() {
         {cards.map((card) => (
           <div
             key={card.label}
-            className={`rounded-2xl border p-5 ${
+            className={`holo-card p-5 ${
               card.alert
                 ? "border-rose-500/40 bg-rose-950/20"
                 : "border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950"
@@ -524,7 +525,7 @@ export function DashboardMetrics() {
       {recentCompletions.length > 0 && (
         <section
           aria-labelledby="recent-ships-heading"
-          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+          className="holo-panel p-5"
         >
           <h2 id="recent-ships-heading" className="text-lg font-semibold text-white">
             Recent cohort wins
@@ -567,7 +568,7 @@ export function DashboardMetrics() {
                 Tasks peers assigned to you — follow through so the team keeps moving.
               </p>
             </div>
-            <Link href="/tasks" className="text-sm text-cyan-400 hover:text-cyan-300">
+            <Link href="/tasks" className="holo-text-link text-sm">
               All tasks →
             </Link>
           </div>
@@ -617,13 +618,13 @@ export function DashboardMetrics() {
       {projectProgress.length > 0 && (
         <section
           aria-labelledby="project-progress-heading"
-          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+          className="holo-panel p-5"
         >
           <div className="mb-4 flex items-center justify-between">
             <h2 id="project-progress-heading" className="text-lg font-semibold">
               Project momentum
             </h2>
-            <Link href="/projects" className="text-sm text-cyan-400 hover:text-cyan-300">
+            <Link href="/projects" className="holo-text-link text-sm">
               All projects →
             </Link>
           </div>
@@ -664,13 +665,13 @@ export function DashboardMetrics() {
 
       <section
         aria-labelledby="next-actions-heading"
-        className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+        className="holo-panel p-5"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="next-actions-heading" className="text-lg font-semibold">
             Your next actions
           </h2>
-          <Link href="/tasks" className="text-sm text-cyan-400 hover:text-cyan-300">
+          <Link href="/tasks" className="holo-text-link text-sm">
             View all →
           </Link>
         </div>
@@ -682,13 +683,13 @@ export function DashboardMetrics() {
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               <Link
                 href="/tasks"
-                className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400"
+                className="holo-btn-primary rounded-lg px-4 py-2 text-sm"
               >
                 Browse tasks
               </Link>
               <Link
                 href="/projects"
-                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+                className="holo-btn-outline rounded-lg px-4 py-2 text-sm"
               >
                 Start a project
               </Link>

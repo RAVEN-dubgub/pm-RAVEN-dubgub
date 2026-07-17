@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
+import { HolographicThemeToggle } from "@/components/holographic-theme-toggle";
 import { requireUser } from "@/lib/auth";
 
 export default async function SignupPage() {
@@ -8,9 +9,12 @@ export default async function SignupPage() {
   if (user) redirect("/dashboard");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-        <h1 className="text-2xl font-semibold text-white">Join the board</h1>
+    <div className="holo-auth-shell">
+      <div className="absolute right-4 top-4 z-10">
+        <HolographicThemeToggle />
+      </div>
+      <div className="holo-auth-card">
+        <h1 className="holo-brand text-2xl">Join the board</h1>
         <p className="mt-2 text-sm text-slate-400">
           Create your account. Peers can assign tasks to you by email.
         </p>
@@ -19,7 +23,7 @@ export default async function SignupPage() {
         </div>
         <p className="mt-4 text-sm text-slate-400">
           Already registered?{" "}
-          <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
+          <Link href="/login" className="holo-text-link">
             Sign in
           </Link>
         </p>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { HolographicThemeToggle } from "@/components/holographic-theme-toggle";
 
 type AppShellProps = {
   userName: string;
@@ -28,17 +29,17 @@ export function AppShell({ userName, children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-cyan-500 focus:px-4 focus:py-2 focus:text-slate-950"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-cyan-400 focus:px-4 focus:py-2 focus:text-slate-950"
       >
         Skip to main content
       </a>
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+      <header className="holo-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div>
-            <Link href="/dashboard" className="text-lg font-semibold tracking-tight text-white">
+            <Link href="/dashboard" className="holo-brand text-lg tracking-tight">
               Cohort PM
             </Link>
             <p className="hidden text-sm text-slate-400 sm:block">Ship together. Track everything.</p>
@@ -52,44 +53,44 @@ export function AppShell({ userName, children }: AppShellProps) {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-lg px-3 py-1.5 transition-colors ${
-                    active
-                      ? "bg-cyan-500/20 text-cyan-300"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }`}
+                  className={`holo-nav-link ${active ? "holo-nav-active" : ""}`}
                 >
                   {link.label}
                 </Link>
               );
             })}
-            <span className="ml-2 text-slate-500" aria-hidden="true">
+            <span className="ml-2 text-slate-600" aria-hidden="true">
               |
             </span>
+            <HolographicThemeToggle compact />
             <span className="ml-2 text-slate-400">{userName}</span>
             <button
               type="button"
               onClick={logout}
-              className="ml-2 rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500 hover:text-white"
+              className="holo-btn-outline ml-2 px-3 py-1.5 text-sm"
             >
               Log out
             </button>
           </nav>
 
-          <button
-            type="button"
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 md:hidden"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? "Close" : "Menu"}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <HolographicThemeToggle compact />
+            <button
+              type="button"
+              className="holo-btn-outline px-3 py-1.5 text-sm"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? "Close" : "Menu"}
+            </button>
+          </div>
         </div>
 
         {menuOpen && (
           <nav
             id="mobile-nav"
-            className="border-t border-slate-800 px-4 py-3 md:hidden"
+            className="border-t border-cyan-500/10 px-4 py-3 md:hidden"
             aria-label="Mobile navigation"
           >
             <ul className="space-y-1">
@@ -102,9 +103,7 @@ export function AppShell({ userName, children }: AppShellProps) {
                       aria-current={active ? "page" : undefined}
                       onClick={() => setMenuOpen(false)}
                       className={`block rounded-lg px-3 py-2 ${
-                        active
-                          ? "bg-cyan-500/20 text-cyan-300"
-                          : "text-slate-300 hover:bg-slate-800"
+                        active ? "holo-nav-active" : "text-slate-300 hover:bg-cyan-500/10"
                       }`}
                     >
                       {link.label}
@@ -112,12 +111,12 @@ export function AppShell({ userName, children }: AppShellProps) {
                   </li>
                 );
               })}
-              <li className="border-t border-slate-800 pt-2">
+              <li className="border-t border-cyan-500/10 pt-2">
                 <span className="block px-3 py-1 text-xs text-slate-500">{userName}</span>
                 <button
                   type="button"
                   onClick={logout}
-                  className="mt-1 w-full rounded-lg border border-slate-700 px-3 py-2 text-left text-slate-300"
+                  className="holo-btn-outline mt-1 w-full px-3 py-2 text-left text-sm"
                 >
                   Log out
                 </button>
@@ -131,10 +130,7 @@ export function AppShell({ userName, children }: AppShellProps) {
         {children}
       </main>
 
-      <nav
-        className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-900/95 backdrop-blur md:hidden"
-        aria-label="Bottom navigation"
-      >
+      <nav className="holo-bottom-nav md:hidden" aria-label="Bottom navigation">
         <ul className="flex justify-around py-2">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
@@ -143,9 +139,7 @@ export function AppShell({ userName, children }: AppShellProps) {
                 <Link
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`block px-4 py-1 text-xs font-medium ${
-                    active ? "text-cyan-400" : "text-slate-400"
-                  }`}
+                  className={`holo-bottom-nav-item ${active ? "holo-bottom-nav-item-active" : ""}`}
                 >
                   {link.label}
                 </Link>

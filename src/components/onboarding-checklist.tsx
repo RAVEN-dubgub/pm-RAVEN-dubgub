@@ -7,6 +7,7 @@ type OnboardingProps = {
   hasTask: boolean;
   hasAssignment: boolean;
   otherCohortMembers?: number;
+  needsActiveOwnedProject?: boolean;
   completedSteps: number;
   totalSteps: number;
 };
@@ -23,12 +24,20 @@ const STEPS = [
   },
 ];
 
-function step4Hint(hasTask: boolean, hasAssignment: boolean, otherCohortMembers: number) {
+function step4Hint(
+  hasTask: boolean,
+  hasAssignment: boolean,
+  otherCohortMembers: number,
+  needsActiveOwnedProject: boolean,
+) {
   if (hasAssignment || !hasTask) return null;
+  if (needsActiveOwnedProject) {
+    return "Your projects are archived, so you cannot assign from the active task list. Restore a project on Projects, or show archived tasks and change Assignee on one of your tasks to another member (not yourself).";
+  }
   if (otherCohortMembers === 0) {
     return "Ask a cohort peer to sign up, then assign one of your tasks to them (not yourself).";
   }
-  return `On Tasks, change a task's Assignee to someone else — ${otherCohortMembers} other member${otherCohortMembers === 1 ? "" : "s"} are registered. Assigning to yourself does not count.`;
+  return `On Tasks, change a task's Assignee on your project to someone else — ${otherCohortMembers} other member${otherCohortMembers === 1 ? "" : "s"} are registered. Assigning to yourself does not count. Cross-project assignments count too.`;
 }
 
 export function OnboardingChecklist({
@@ -36,20 +45,26 @@ export function OnboardingChecklist({
   hasTask,
   hasAssignment,
   otherCohortMembers = 0,
+  needsActiveOwnedProject = false,
   completedSteps,
   totalSteps,
 }: OnboardingProps) {
   const checks = { hasProject, hasTask, hasAssignment };
   const progress = Math.round((completedSteps / totalSteps) * 100);
   const isComplete = completedSteps >= totalSteps;
-  const assignHint = step4Hint(hasTask, hasAssignment, otherCohortMembers);
+  const assignHint = step4Hint(
+    hasTask,
+    hasAssignment,
+    otherCohortMembers,
+    needsActiveOwnedProject,
+  );
 
   if (isComplete) return null;
 
   return (
     <section
       aria-labelledby="onboarding-heading"
-      className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 to-slate-900/60 p-5"
+      className="holo-panel holo-panel-featured p-5"
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -71,7 +86,7 @@ export function OnboardingChecklist({
           <span>{progress}%</span>
         </div>
         <div
-          className="h-2 rounded-full bg-slate-800"
+          className="holo-progress-track h-2"
           role="progressbar"
           aria-valuenow={progress}
           aria-valuemin={0}
@@ -79,7 +94,7 @@ export function OnboardingChecklist({
           aria-label="Onboarding progress"
         >
           <div
-            className="h-2 rounded-full bg-cyan-500 transition-all duration-500"
+            className="holo-progress-fill h-2 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
