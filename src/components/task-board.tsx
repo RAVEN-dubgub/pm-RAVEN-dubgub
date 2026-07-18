@@ -47,6 +47,15 @@ type TaskBoardProps = {
 
 type ViewMode = "hud" | "board" | "list";
 
+function buildProjectTaskCounts(taskList: TaskItem[]) {
+  const counts: Record<string, number> = {};
+  for (const task of taskList) {
+    if (task.archived) continue;
+    counts[task.project.id] = (counts[task.project.id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 function assigneeLabel(user: UserOption, currentUserId: string) {
   const name = user.name.trim() || user.email;
   return user.id === currentUserId ? `${name} (you)` : name;
@@ -62,7 +71,9 @@ export function TaskBoard({
   const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
   const users = initialUsers;
   const projects = initialProjects;
-  const [projectFilter, setProjectFilter] = useState(initialProjectFilter);
+  const [projectFilter, setProjectFilter] = useState(
+    initialProjectFilter && initialTasks.length === 0 ? "" : initialProjectFilter,
+  );
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -85,11 +96,17 @@ export function TaskBoard({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { setReadout } = useHoloRingReadout();
   const [checkInDrafts, setCheckInDrafts] = useState<Record<string, string>>({});
+  const [projectTaskCounts, setProjectTaskCounts] = useState<Record<string, number>>(() =>
+    buildProjectTaskCounts(initialTasks),
+  );
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [emptiedByDelete, setEmptiedByDelete] = useState(false);
   const skipInitialFetch = useRef(true);
 
   const hasActiveFilters = Boolean(
     projectFilter || assigneeFilter || statusFilter || priorityFilter,
   );
+  const hasNonProjectFilters = Boolean(assigneeFilter || statusFilter || priorityFilter);
   const usesDefaultView = !showArchived && !hasActiveFilters;
 
   const query = useMemo(() => {
@@ -140,6 +157,26 @@ export function TaskBoard({
     }
     setListLoading(false);
   }
+
+  useEffect(() => {
+    let active = true;
+    async function loadProjectTaskCounts() {
+      const response = await fetch("/api/tasks", { credentials: "same-origin" });
+      if (!active || !response.ok) return;
+      const data = await response.json();
+      setProjectTaskCounts(buildProjectTaskCounts(data.tasks as TaskItem[]));
+    }
+    void loadProjectTaskCounts();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
 
   useEffect(() => {
     if (usesDefaultView && skipInitialFetch.current) {
@@ -209,6 +246,13 @@ export function TaskBoard({
       setAssigneeId("");
       setBlockedById("");
       setPriority("MEDIUM");
+
+      if (!createdTask.archived) {
+        setProjectTaskCounts((current) => ({
+          ...current,
+          [createdTask.project.id]: (current[createdTask.project.id] ?? 0) + 1,
+        }));
+      }
 
       if (usesDefaultView && !createdTask.archived) {
         setTasks((current) => {
@@ -303,6 +347,20 @@ export function TaskBoard({
     }
 
     setTasks((current) => current.filter((task) => task.id !== id));
+    const affected = tasks.find((item) => item.id === id);
+    if (affected) {
+      if (archived && !affected.archived) {
+        setProjectTaskCounts((current) => ({
+          ...current,
+          [affected.project.id]: Math.max(0, (current[affected.project.id] ?? 1) - 1),
+        }));
+      } else if (!archived && affected.archived) {
+        setProjectTaskCounts((current) => ({
+          ...current,
+          [affected.project.id]: (current[affected.project.id] ?? 0) + 1,
+        }));
+      }
+    }
   }
 
   async function deleteTask(id: string) {
@@ -329,15 +387,50 @@ export function TaskBoard({
       return;
     }
 
-    setTasks((current) => current.filter((item) => item.id !== id));
+    const remaining = tasks.filter((item) => item.id !== id);
+    setTasks(remaining);
+
+    if (task && !task.archived) {
+      setProjectTaskCounts((current) => ({
+        ...current,
+        [task.project.id]: Math.max(0, (current[task.project.id] ?? 1) - 1),
+      }));
+    }
+
+    const projectHasNoTasks =
+      task != null && (projectTaskCounts[task.project.id] ?? 1) <= 1;
+    const shouldClearProjectFilter =
+      Boolean(projectFilter) &&
+      (remaining.length === 0 || (projectFilter === task?.project.id && projectHasNoTasks));
+
+    if (remaining.length === 0) {
+      setEmptiedByDelete(true);
+    }
+
+    if (shouldClearProjectFilter) {
+      setProjectFilter("");
+      setToastMessage("Task deleted — showing all projects");
+    } else {
+      setToastMessage("Task deleted");
+    }
   }
 
   function clearFilters() {
+    setEmptiedByDelete(false);
     setProjectFilter("");
     setAssigneeFilter("");
     setStatusFilter("");
     setPriorityFilter("");
   }
+
+  function clearProjectFilter() {
+    setEmptiedByDelete(false);
+    setProjectFilter("");
+  }
+
+  const filteredProjectTitle = projectFilter
+    ? projects.find((project) => project.id === projectFilter)?.title
+    : undefined;
 
   const taskCounts = useMemo(
     () => ({
@@ -523,11 +616,15 @@ export function TaskBoard({
               assigneeFilter={assigneeFilter}
               statusFilter={statusFilter}
               priorityFilter={priorityFilter}
-              onProjectFilter={setProjectFilter}
+              onProjectFilter={(id) => {
+                setEmptiedByDelete(false);
+                setProjectFilter(id);
+              }}
               onAssigneeFilter={setAssigneeFilter}
               onStatusFilter={setStatusFilter}
               onPriorityFilter={setPriorityFilter}
               taskCounts={taskCounts}
+              projectTaskCounts={projectTaskCounts}
             />
         </div>
       }
@@ -619,6 +716,16 @@ export function TaskBoard({
         </button>
       }
     >
+      {toastMessage ? (
+        <div
+          className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-xl border border-emerald-500/35 bg-emerald-950/90 px-4 py-2.5 text-sm text-emerald-100 shadow-lg backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          {toastMessage}
+        </div>
+      ) : null}
+
       {listError ? (
         <div
           className="mb-3 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
@@ -639,10 +746,36 @@ export function TaskBoard({
           <p className="text-sm text-slate-400">
             {showArchived
               ? "No archived tasks."
-              : hasActiveFilters
-                ? "No tasks match these filters."
-                : "No tasks in orbit - tap + to add one."}
+              : projectFilter && !hasNonProjectFilters
+                ? filteredProjectTitle
+                  ? `No tasks in ${filteredProjectTitle}.`
+                  : "No tasks in this project."
+                : hasActiveFilters
+                  ? emptiedByDelete
+                    ? "You deleted the last matching task."
+                    : "No tasks match these filters."
+                  : emptiedByDelete
+                    ? "You deleted the last task — tap + to add another."
+                    : "No tasks in orbit - tap + to add one."}
           </p>
+          {!showArchived && projectFilter ? (
+            <button
+              type="button"
+              onClick={clearProjectFilter}
+              className="holo-btn-primary mt-4 inline-block px-4 py-2 text-sm"
+            >
+              Show all tasks
+            </button>
+          ) : null}
+          {!showArchived && hasActiveFilters && hasNonProjectFilters ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="holo-btn-primary mt-4 inline-block px-4 py-2 text-sm"
+            >
+              Clear filters
+            </button>
+          ) : null}
         </div>
       ) : viewMode === "hud" ? (
         <TaskHudView

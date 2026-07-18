@@ -537,6 +537,19 @@ export function TaskHudView({
   const focusedTask = tasks.find((task) => task.id === focusedId);
 
   useEffect(() => {
+    if (focusedId && !tasks.some((task) => task.id === focusedId)) {
+      focus(null);
+    }
+  }, [tasks, focusedId, focus]);
+
+  function handleDeleteTask(id: string) {
+    if (focusedId === id) {
+      focus(null);
+    }
+    onDeleteTask(id);
+  }
+
+  useEffect(() => {
     if (focusedTask) {
       setReadout({
         metric: statusLabel(focusedTask.status).slice(0, 3).toUpperCase(),
@@ -621,7 +634,7 @@ export function TaskHudView({
                 onSubmitCheckIn={onSubmitCheckIn}
                 onUpdateTask={onUpdateTask}
                 onArchiveTask={onArchiveTask}
-                onDeleteTask={onDeleteTask}
+                onDeleteTask={handleDeleteTask}
                 blockerOptionsForTask={blockerOptionsForTask}
                 expanded={false}
               />
@@ -682,7 +695,7 @@ export function TaskHudView({
 
                 onArchiveTask={onArchiveTask}
 
-                onDeleteTask={onDeleteTask}
+                onDeleteTask={handleDeleteTask}
 
                 blockerOptionsForTask={blockerOptionsForTask}
 
@@ -742,7 +755,7 @@ export function TaskHudView({
 
               onArchiveTask={onArchiveTask}
 
-              onDeleteTask={onDeleteTask}
+              onDeleteTask={handleDeleteTask}
 
               blockerOptionsForTask={blockerOptionsForTask}
 
@@ -785,6 +798,8 @@ export function TaskHudFilters({
   onPriorityFilter,
 
   taskCounts,
+
+  projectTaskCounts = {},
 }: {
   projects: { id: string; title: string }[];
 
@@ -809,7 +824,14 @@ export function TaskHudFilters({
   onPriorityFilter: (priority: string) => void;
 
   taskCounts: { todo: number; inProgress: number; done: number; high: number };
+
+  projectTaskCounts?: Record<string, number>;
 }) {
+  const visibleProjects = projects.filter(
+    (project) =>
+      (projectTaskCounts[project.id] ?? 0) > 0 || projectFilter === project.id,
+  );
+
   return (
     <div className="space-y-3">
       <div className="hud-filter-strip">
@@ -820,7 +842,7 @@ export function TaskHudFilters({
             All
           </HudPill>
 
-          {projects.map((project) => (
+          {visibleProjects.map((project) => (
             <HudPill
               key={project.id}
 
