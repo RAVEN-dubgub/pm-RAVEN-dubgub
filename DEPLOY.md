@@ -54,26 +54,32 @@ openssl rand -base64 32
 
 ### Option B — Vercel CLI (copy-paste)
 
+**Windows PowerShell:** use `npx.cmd` (not `npx`) — PowerShell may block `npx.ps1` with `PSSecurityException`.
+
 Replace placeholders, then run from repo root:
 
 ```powershell
 cd c:\Users\wolfs\OneDrive\Documents\Cursor\pm-raven-dubgub
 
 # DATABASE_URL — paste Neon pooled URL when prompted
-npx vercel env add DATABASE_URL production
-npx vercel env add DATABASE_URL preview
-npx vercel env add DATABASE_URL development
+npx.cmd vercel env add DATABASE_URL production
+npx.cmd vercel env add DATABASE_URL preview
+npx.cmd vercel env add DATABASE_URL development
 
 # AUTH_SECRET — paste generated secret when prompted
-npx vercel env add AUTH_SECRET production
-npx vercel env add AUTH_SECRET preview
-npx vercel env add AUTH_SECRET development
+npx.cmd vercel env add AUTH_SECRET production
+npx.cmd vercel env add AUTH_SECRET preview
+npx.cmd vercel env add AUTH_SECRET development
 
 # OPENAI_API_KEY — paste OpenAI key when prompted (Task Coach)
-npx vercel env add OPENAI_API_KEY production
-npx vercel env add OPENAI_API_KEY preview
-npx vercel env add OPENAI_API_KEY development
+npx.cmd vercel env add OPENAI_API_KEY production
+npx.cmd vercel env add OPENAI_API_KEY preview
+npx.cmd vercel env add OPENAI_API_KEY development
 ```
+
+**Easier on Windows:** double-click or run `scripts\add-openai-vercel.cmd` — prompts for your key, adds to all envs, redeploys.
+
+**Or Vercel Dashboard:** [Environment Variables](https://vercel.com/raven-dubgubs-projects/pm-raven-dubgub/settings/environment-variables) → add `OPENAI_API_KEY` for Production + Preview + Development → Redeploy.
 
 ---
 
@@ -83,7 +89,7 @@ From repo root, with your Neon `DATABASE_URL`:
 
 ```powershell
 $env:DATABASE_URL = "postgresql://USER:PASS@ep-xxx-pooler.../neondb?sslmode=require"
-npx prisma migrate deploy
+npx.cmd prisma migrate deploy
 ```
 
 Expected output: `All migrations have been successfully applied.`
@@ -93,7 +99,7 @@ Expected output: `All migrations have been successfully applied.`
 ## Step 4 — Deploy to Vercel
 
 ```powershell
-npx vercel --prod --yes
+npx.cmd vercel --prod --yes
 ```
 
 Or push to `main` — GitHub integration auto-deploys once env vars exist.
@@ -131,6 +137,7 @@ Commit and push.
 | 500 on signup/login | `DATABASE_URL` missing or migrations not run |
 | "Unauthorized" everywhere | `AUTH_SECRET` not set on Vercel |
 | Task Coach returns 503 | `OPENAI_API_KEY` not set on Vercel |
+| `npx` PSSecurityException on Windows | Use `npx.cmd` instead of `npx`, or run `scripts\add-openai-vercel.cmd` |
 | Invalid GitHub URL on project | Use full URL: `https://github.com/owner/repo` |
 | Build fails on Vercel | Check build logs; `postinstall` runs `prisma generate` |
 | Local dev | Copy `.env.example` → `.env`, use Neon dev branch URL |
