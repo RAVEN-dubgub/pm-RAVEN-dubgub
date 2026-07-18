@@ -1649,7 +1649,8 @@ body {
 .holo-hud-orbit-label {
   position: absolute;
   transform: translate(-50%, -50%);
-  pointer-events: auto;
+  /* Decorative only — header/bottom nav owns routing; auto here caused stray /tasks jumps through orbit gaps. */
+  pointer-events: none;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.5625rem;
   font-weight: 600;

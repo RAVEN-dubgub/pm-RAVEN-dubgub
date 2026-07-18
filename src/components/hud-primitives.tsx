@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 type ArcGaugeProps = {
   value: number;
@@ -118,12 +118,19 @@ export function HudWidget({
 }: HudWidgetProps) {
   const interactive = Boolean(onFocus);
 
+  function handleWidgetClick(event: MouseEvent<HTMLElement>) {
+    if (!onFocus) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("a, button, input, select, textarea, label")) return;
+    onFocus();
+  }
+
   return (
     <section
       id={focusId}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
-      onClick={interactive ? onFocus : undefined}
+      onClick={interactive ? handleWidgetClick : undefined}
       onKeyDown={
         interactive
           ? (event) => {

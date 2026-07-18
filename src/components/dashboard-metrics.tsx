@@ -497,7 +497,11 @@ export function DashboardMetrics() {
                 onFocus={() => toggle("your-queue")}
                 metric={metrics.myOpenTasks}
               >
-                <Link href="/tasks" className="holo-text-link text-xs">
+                <Link
+                  href="/tasks"
+                  className="holo-text-link text-xs"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   Open tasks →
                 </Link>
               </HudWidget>

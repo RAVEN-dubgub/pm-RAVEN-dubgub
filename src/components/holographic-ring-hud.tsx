@@ -4,8 +4,6 @@
 
 import { usePathname } from "next/navigation";
 
-import Link from "next/link";
-
 import { useMemo } from "react";
 
 import { useHoloFocusPulse } from "@/lib/holo-focus";
@@ -180,24 +178,17 @@ export function HolographicRingHud() {
 
             return (
 
-              <Link
+              <span
                 key={segment.href}
-                href={segment.href}
                 className={`holo-hud-orbit-label ${active ? "holo-hud-orbit-label-active" : ""}`}
                 style={{
                   left: `${50 + Math.cos(rad) * dist}%`,
                   top: `${50 + Math.sin(rad) * dist}%`,
                 }}
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.dispatchEvent(
-                      new CustomEvent("holo-nav-pick", { detail: { route: segment.href } }),
-                    );
-                  }
-                }}
+                aria-hidden="true"
               >
                 {segment.label.slice(0, 3).toUpperCase()}
-              </Link>
+              </span>
 
             );
 

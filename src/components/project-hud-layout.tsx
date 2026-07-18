@@ -216,75 +216,75 @@ function ProjectHudModule({
 
       className={`hud-project-module ${variant === "featured" ? "hud-project-featured" : "hud-project-satellite"} ${project.atRisk ? "hud-project-at-risk" : ""} ${isSmoke ? "opacity-70" : ""} ${focused ? "hud-project-focused hud-scan-sweep" : ""} ${dimmed ? "hud-project-dimmed" : ""}`}
     >
-      <Link
-        href={tasksHref}
-
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 rounded-lg"
-
-        onClick={(event) => event.stopPropagation()}
+      <div
+        className={`flex gap-4 ${variant === "featured" ? "flex-col items-center text-center sm:flex-row sm:text-left" : ""}`}
       >
-        <div
-          className={`flex gap-4 ${variant === "featured" ? "flex-col items-center text-center sm:flex-row sm:text-left" : ""}`}
+        <ArcGauge
+          value={progress}
+
+          size={variant === "featured" ? 120 : 72}
+
+          strokeWidth={variant === "featured" ? 6 : 4}
+
+          color={project.atRisk ? "amber" : "magenta"}
         >
-          <ArcGauge
-            value={progress}
-
-            size={variant === "featured" ? 120 : 72}
-
-            strokeWidth={variant === "featured" ? 6 : 4}
-
-            color={project.atRisk ? "amber" : "magenta"}
+          <span
+            className={`font-bold tabular-nums text-white ${variant === "featured" ? "jarvis-metric-glow text-3xl" : "text-base"}`}
           >
-            <span
-              className={`font-bold tabular-nums text-white ${variant === "featured" ? "jarvis-metric-glow text-3xl" : "text-base"}`}
+            {progress}
+          </span>
+
+          <span className="text-[10px] text-slate-400">%</span>
+        </ArcGauge>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3
+              className={`font-semibold text-white ${variant === "featured" ? "text-xl" : "text-sm"}`}
             >
-              {progress}
-            </span>
+              {project.title}
+            </h3>
 
-            <span className="text-[10px] text-slate-400">%</span>
-          </ArcGauge>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3
-                className={`font-semibold text-white ${variant === "featured" ? "text-xl" : "text-sm"}`}
-              >
-                {project.title}
-              </h3>
-
-              {project.atRisk && !project.archived && (
-                <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-300">
-                  At risk
-                </span>
-              )}
-
-              {project.archived && (
-                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">
-                  Archived
-                </span>
-              )}
-            </div>
-
-            <p className="mt-1 text-xs text-slate-400">
-              {project.owner.name}
-
-              {isMine ? " (you)" : ""}
-
-              {isSmoke ? " · test" : ""}
-            </p>
-
-            {project.description && (variant === "featured" || focused) && (
-              <p className="mt-2 line-clamp-3 text-sm text-slate-300">
-                {project.description}
-              </p>
+            {project.atRisk && !project.archived && (
+              <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-300">
+                At risk
+              </span>
             )}
 
-            <p className="mt-2 text-[10px] text-fuchsia-300/70">
-              {done}/{total} tasks complete
-            </p>
+            {project.archived && (
+              <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">
+                Archived
+              </span>
+            )}
           </div>
+
+          <p className="mt-1 text-xs text-slate-400">
+            {project.owner.name}
+
+            {isMine ? " (you)" : ""}
+
+            {isSmoke ? " · test" : ""}
+          </p>
+
+          {project.description && (variant === "featured" || focused) && (
+            <p className="mt-2 line-clamp-3 text-sm text-slate-300">
+              {project.description}
+            </p>
+          )}
+
+          <p className="mt-2 text-[10px] text-fuchsia-300/70">
+            {done}/{total} tasks complete
+          </p>
+
+          <Link
+            href={tasksHref}
+            className="holo-text-link mt-2 inline-block text-xs"
+            onClick={(event) => event.stopPropagation()}
+          >
+            View tasks →
+          </Link>
         </div>
-      </Link>
+      </div>
 
       {isMine && (
         <div
