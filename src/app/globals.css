@@ -1698,12 +1698,15 @@ body {
 
 .hud-task-tile-orbit {
   transition:
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
     filter 0.45s ease,
     opacity 0.45s ease,
     box-shadow 0.45s ease,
     border-color 0.35s ease;
   transform-style: preserve-3d;
+}
+
+.hud-task-tile-orbit:hover {
+  transform: var(--orbit-transform, translate(-50%, -50%)) !important;
 }
 
 .hud-task-tile-focused {
@@ -1718,6 +1721,11 @@ body {
   opacity: 0.38;
   filter: blur(2px) saturate(0.65);
   pointer-events: none;
+}
+
+.hud-task-field-focus .hud-task-tile-orbit.hud-task-tile-dimmed {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .hud-projection-backdrop {

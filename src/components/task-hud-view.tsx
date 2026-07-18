@@ -501,7 +501,8 @@ export function TaskHudView({
 
           const isFocused = focusedId === task.id;
 
-          const isDimmed = hasFocus && !isFocused;
+          // Projection panel holds expanded content — keep orbit tiles compact and dimmed.
+          const isDimmed = hasFocus;
 
           const overdue = isOverdue(task.dueDate, task.status);
 
@@ -534,13 +535,14 @@ export function TaskHudView({
 
                 top: `calc(50% + ${slot.y}px)`,
 
-                transform: isFocused
-                  ? "translate(-50%, -50%) scale(1.1) translateZ(40px)"
-                  : tasks.length <= 1
+                ["--orbit-transform" as string]:
+                  tasks.length <= 1
                     ? "translate(-50%, -50%)"
                     : `translate(-50%, -50%) rotate(${slot.angleDeg * 0.04}deg)`,
 
-                zIndex: isFocused ? 30 : 10 + index,
+                transform: "var(--orbit-transform)",
+
+                zIndex: 10 + index,
               }}
             >
               <TaskTileBody
@@ -562,7 +564,7 @@ export function TaskHudView({
 
                 blockerOptionsForTask={blockerOptionsForTask}
 
-                expanded={isFocused}
+                expanded={false}
               />
             </article>
           );
@@ -635,7 +637,7 @@ export function TaskHudView({
 
       {focusedTask && (
         <div
-          className="hud-projection-backdrop md:hidden"
+          className="hud-projection-backdrop"
 
           onClick={() => focus(null)}
 
@@ -644,8 +646,8 @@ export function TaskHudView({
       )}
 
       {focusedTask && (
-        <div className="hud-projection-layer fixed inset-x-3 top-24 z-50 md:hidden">
-          <article className="hud-projection-panel hud-scan-sweep mx-auto max-w-lg">
+        <div className="hud-projection-layer fixed inset-x-3 top-24 z-50 md:inset-x-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-2xl md:-translate-x-1/2 md:-translate-y-1/2">
+          <article className="hud-projection-panel hud-scan-sweep mx-auto max-h-[min(80vh,720px)] max-w-lg overflow-y-auto md:max-w-2xl">
             <header className="mb-3 flex items-center justify-between gap-2">
               <p className="jarvis-status-line">Task projection</p>
 
@@ -688,7 +690,7 @@ export function TaskHudView({
       )}
 
       {hasFocus && (
-        <p className="relative z-[2] mt-4 text-center text-[10px] text-slate-600 md:mt-0 md:absolute md:bottom-0 md:left-0 md:right-0">
+        <p className="relative z-[60] mt-4 text-center text-[10px] text-slate-600 md:fixed md:bottom-6 md:left-0 md:right-0">
           Tap tile to project · Esc to dismiss
         </p>
       )}
