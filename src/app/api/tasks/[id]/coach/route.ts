@@ -45,16 +45,6 @@ export async function POST(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      {
-        error:
-          "Task coach is not configured. Ask the site owner to set OPENAI_API_KEY on Vercel.",
-      },
-      { status: 503 },
-    );
-  }
-
   const { id } = await context.params;
 
   if (!checkRateLimit(user.id, id)) {
@@ -89,34 +79,26 @@ export async function POST(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  try {
-    const coach = await generateTaskCoach({
-      task: {
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        definitionOfDone: task.definitionOfDone,
-        status: task.status,
-        priority: task.priority,
-        dueDate: task.dueDate?.toISOString() ?? null,
-        blockedBy: task.blockedBy
-          ? { title: task.blockedBy.title, status: task.blockedBy.status }
-          : null,
-      },
-      project: {
-        title: task.project.title,
-        githubRepoUrl: task.project.githubRepoUrl,
-      },
-      assigneeName: task.assignee?.name ?? null,
-      requesterName: user.name,
-    });
+  const coach = await generateTaskCoach({
+    task: {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      definitionOfDone: task.definitionOfDone,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate?.toISOString() ?? null,
+      blockedBy: task.blockedBy
+        ? { title: task.blockedBy.title, status: task.blockedBy.status }
+        : null,
+    },
+    project: {
+      title: task.project.title,
+      githubRepoUrl: task.project.githubRepoUrl,
+    },
+    assigneeName: task.assignee?.name ?? null,
+    requesterName: user.name,
+  });
 
-    return NextResponse.json({ coach });
-  } catch (error) {
-    console.error("task coach error", error);
-    return NextResponse.json(
-      { error: "Could not generate plan. Try again in a moment." },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ coach });
 }
