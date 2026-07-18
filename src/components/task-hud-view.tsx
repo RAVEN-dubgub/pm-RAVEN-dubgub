@@ -23,6 +23,7 @@ import {
 import { TaskCoachPanel } from "@/components/task-coach-panel";
 import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
+import { canDeleteTask } from "@/lib/tasks";
 
 type UserOption = { id: string; name: string; email: string };
 
@@ -63,6 +64,8 @@ type TaskItem = {
 
   assignee: UserOption | null;
 
+  assignedById?: string | null;
+
   blockedBy: BlockerRef | null;
 };
 
@@ -82,6 +85,8 @@ type TaskHudViewProps = {
   onUpdateTask: (id: string, patch: Record<string, unknown>) => void;
 
   onArchiveTask: (id: string, archived: boolean) => void;
+
+  onDeleteTask: (id: string) => void;
 
   blockerOptionsForTask: (task: TaskItem) => TaskItem[];
 };
@@ -158,6 +163,8 @@ function TaskTileBody({
 
   onArchiveTask,
 
+  onDeleteTask,
+
   blockerOptionsForTask,
 
   expanded = false,
@@ -178,6 +185,8 @@ function TaskTileBody({
 
   onArchiveTask: (id: string, archived: boolean) => void;
 
+  onDeleteTask: (id: string) => void;
+
   blockerOptionsForTask: (task: TaskItem) => TaskItem[];
 
   expanded?: boolean;
@@ -191,6 +200,8 @@ function TaskTileBody({
   const checkInStale = isCheckInStale(task.lastCheckInAt, task.status);
 
   const isMyTask = task.assignee?.id === currentUserId;
+
+  const canDelete = canDeleteTask(currentUserId, task);
 
   return (
     <>
@@ -406,6 +417,19 @@ function TaskTileBody({
         >
           {task.archived ? "Restore" : "Archive"}
         </button>
+
+        {canDelete && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDeleteTask(task.id);
+            }}
+            className="hud-tile-btn text-rose-300 hover:text-rose-200"
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       {!task.archived && isMyTask && task.status === "IN_PROGRESS" && (
@@ -475,6 +499,8 @@ export function TaskHudView({
   onUpdateTask,
 
   onArchiveTask,
+
+  onDeleteTask,
 
   blockerOptionsForTask,
 }: TaskHudViewProps) {
@@ -595,6 +621,7 @@ export function TaskHudView({
                 onSubmitCheckIn={onSubmitCheckIn}
                 onUpdateTask={onUpdateTask}
                 onArchiveTask={onArchiveTask}
+                onDeleteTask={onDeleteTask}
                 blockerOptionsForTask={blockerOptionsForTask}
                 expanded={false}
               />
@@ -655,6 +682,8 @@ export function TaskHudView({
 
                 onArchiveTask={onArchiveTask}
 
+                onDeleteTask={onDeleteTask}
+
                 blockerOptionsForTask={blockerOptionsForTask}
 
                 expanded={isFocused}
@@ -712,6 +741,8 @@ export function TaskHudView({
               onUpdateTask={onUpdateTask}
 
               onArchiveTask={onArchiveTask}
+
+              onDeleteTask={onDeleteTask}
 
               blockerOptionsForTask={blockerOptionsForTask}
 

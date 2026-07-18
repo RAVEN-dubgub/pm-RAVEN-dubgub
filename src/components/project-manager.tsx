@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { HoloWorkspace } from "@/components/holo-workspace";
 import { ProjectHudLayout, ProjectHudStats } from "@/components/project-hud-layout";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
-
+import { isSmokeUser } from "@/lib/smoke-users";
+import { sumTaskProgress } from "@/lib/task-progress";
 type Project = {
   id: string;
   title: string;
@@ -15,7 +16,7 @@ type Project = {
   weeklyUpdate: string | null;
   weeklyUpdateAt: string | null;
   owner: { id?: string; name: string; email?: string };
-  tasks: { status: string }[];
+  tasks: { status: string; archived?: boolean }[];
 };
 
 type ProjectManagerProps = {
@@ -186,17 +187,16 @@ export function ProjectManager({
   }
 
   const activeProjects = projects.filter((p) => !p.archived);
+  const cohortProjects = activeProjects.filter(
+    (project) =>
+      !isSmokeUser({ name: project.owner.name, email: project.owner.email ?? "" }),
+  );
   const myActiveCount = activeProjects.filter(
     (p) => p.owner.id === currentUserId,
   ).length;
   const atRiskCount = activeProjects.filter((p) => p.atRisk).length;
-  const totalTasks = activeProjects.reduce((sum, p) => sum + p.tasks.length, 0);
-  const doneTasks = activeProjects.reduce(
-    (sum, p) => sum + p.tasks.filter((t) => t.status === "DONE").length,
-    0,
-  );
-  const cohortCompletion =
-    totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+  const { done: doneTasks, total: totalTasks, progress: cohortCompletion } =
+    sumTaskProgress(cohortProjects);
   const weeklyUpdateCount = activeProjects.filter((p) => p.weeklyUpdate).length;
   const { setReadout } = useHoloRingReadout();
 

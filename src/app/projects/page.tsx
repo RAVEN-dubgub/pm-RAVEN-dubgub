@@ -13,6 +13,10 @@ export default async function ProjectsPage() {
   const initialProjects = (await listProjects("active")).map((project) => ({
     ...project,
     weeklyUpdateAt: project.weeklyUpdateAt?.toISOString() ?? null,
+    tasks: project.tasks.map((task) => ({
+      ...task,
+      dueDate: task.dueDate?.toISOString() ?? null,
+    })),
   }));
 
   return (

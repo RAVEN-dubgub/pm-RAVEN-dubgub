@@ -305,6 +305,33 @@ export function TaskBoard({
     setTasks((current) => current.filter((task) => task.id !== id));
   }
 
+  async function deleteTask(id: string) {
+    const task = tasks.find((item) => item.id === id);
+    const confirmed = window.confirm(
+      task
+        ? `Permanently delete "${task.title}"? This cannot be undone.`
+        : "Permanently delete this task? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      setListError(
+        data.error === "Forbidden"
+          ? "You can only delete tasks you own, assigned, or created."
+          : "Could not delete task. Please try again.",
+      );
+      return;
+    }
+
+    setTasks((current) => current.filter((item) => item.id !== id));
+  }
+
   function clearFilters() {
     setProjectFilter("");
     setAssigneeFilter("");
@@ -629,6 +656,7 @@ export function TaskBoard({
           onSubmitCheckIn={(task) => void submitCheckIn(task)}
           onUpdateTask={(id, patch) => void updateTask(id, patch)}
           onArchiveTask={(id, archived) => void archiveTask(id, archived)}
+          onDeleteTask={(id) => void deleteTask(id)}
           blockerOptionsForTask={blockerOptionsForTask}
         />
       ) : viewMode === "board" ? (

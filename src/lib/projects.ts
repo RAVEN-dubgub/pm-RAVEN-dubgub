@@ -7,9 +7,8 @@ const projectListInclude = {
   owner: { select: { id: true, name: true, email: true } },
   tasks: {
     where: { archived: false },
-    select: { id: true, status: true, assigneeId: true, dueDate: true },
+    select: { id: true, status: true, archived: true, assigneeId: true, dueDate: true },
   },
-  _count: { select: { tasks: true } },
 } as const;
 
 export type ProjectListItem = Awaited<ReturnType<typeof listProjects>>[number];

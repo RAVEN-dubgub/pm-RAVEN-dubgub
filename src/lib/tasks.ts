@@ -77,6 +77,21 @@ export async function wouldCreateCircularBlock(
   return false;
 }
 
+export function canDeleteTask(
+  userId: string,
+  task: {
+    assigneeId?: string | null;
+    assignedById?: string | null;
+    project: { ownerId: string };
+  },
+) {
+  return (
+    task.assigneeId === userId ||
+    task.assignedById === userId ||
+    task.project.ownerId === userId
+  );
+}
+
 export async function validateBlocker(
   taskId: string | null,
   blockedById: string | null,

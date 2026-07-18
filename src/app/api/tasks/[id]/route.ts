@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { taskListInclude, validateBlocker } from "@/lib/tasks";
+import { canDeleteTask, taskListInclude, validateBlocker } from "@/lib/tasks";
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -94,6 +94,21 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
+  const existing = await prisma.task.findUnique({
+    where: { id },
+    include: {
+      project: { select: { ownerId: true } },
+    },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  if (!canDeleteTask(user.id, existing)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   await prisma.task.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

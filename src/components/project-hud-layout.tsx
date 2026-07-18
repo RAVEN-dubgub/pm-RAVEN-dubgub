@@ -11,6 +11,7 @@ import { ArcGauge, HudWidget } from "@/components/hud-primitives";
 import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
 
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
+import { computeTaskProgress } from "@/lib/task-progress";
 
 type Project = {
   id: string;
@@ -31,7 +32,7 @@ type Project = {
 
   owner: { id?: string; name: string; email?: string };
 
-  tasks: { status: string }[];
+  tasks: { status: string; archived?: boolean }[];
 };
 
 type ProjectHudLayoutProps = {
@@ -60,15 +61,7 @@ type ProjectHudLayoutProps = {
 };
 
 function projectProgress(project: Project) {
-  const done = project.tasks.filter((t) => t.status === "DONE").length;
-
-  const total = project.tasks.length;
-
-  return {
-    done,
-    total,
-    progress: total === 0 ? 0 : Math.round((done / total) * 100),
-  };
+  return computeTaskProgress(project.tasks);
 }
 
 function ProjectOrbitChip({

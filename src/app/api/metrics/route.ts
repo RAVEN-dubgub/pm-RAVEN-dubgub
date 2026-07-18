@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { peerAssignmentOnboardingWhere } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
+import { isSmokeUser } from "@/lib/smoke-users";
+import { computeTaskProgress } from "@/lib/task-progress";
 
 const activeTaskWhere = {
   archived: false,
@@ -75,7 +77,10 @@ export async function GET() {
     prisma.user.count(),
     prisma.project.findMany({
       where: { archived: false },
-      include: { tasks: { where: { archived: false }, select: { status: true } } },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        tasks: { where: { archived: false }, select: { status: true, archived: true } },
+      },
       orderBy: { updatedAt: "desc" },
       take: 6,
     }),
@@ -178,18 +183,19 @@ export async function GET() {
     (task) => task.status === "TODO",
   ).length;
 
-  const projectProgress = projectsWithTasks.map((project) => {
-    const done = project.tasks.filter((t) => t.status === "DONE").length;
-    const total = project.tasks.length;
-    return {
-      id: project.id,
-      title: project.title,
-      done,
-      total,
-      progress: total === 0 ? 0 : Math.round((done / total) * 100),
-      atRisk: project.atRisk,
-    };
-  });
+  const projectProgress = projectsWithTasks
+    .filter((project) => !isSmokeUser(project.owner))
+    .map((project) => {
+      const { done, total, progress } = computeTaskProgress(project.tasks);
+      return {
+        id: project.id,
+        title: project.title,
+        done,
+        total,
+        progress,
+        atRisk: project.atRisk,
+      };
+    });
 
   const weekMs = 7 * 24 * 60 * 60 * 1000;
   const checkInStaleMs = 2 * 24 * 60 * 60 * 1000;
