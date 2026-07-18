@@ -1731,10 +1731,45 @@ body {
 .hud-projection-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 52;
   background: rgba(4, 6, 15, 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+}
+
+/* Fixed layer below filter HUD; parent main z-index raised on task focus (see below). */
+.hud-projection-layer {
+  position: fixed;
+  z-index: 55;
+  inset-inline: 0.75rem;
+  top: clamp(17rem, 38vh, 22rem);
+  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.hud-projection-layer > * {
+  pointer-events: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .hud-projection-layer {
+    inset-inline: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    top: clamp(15rem, 34vh, 19rem);
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: 42rem;
+  }
+}
+
+.holo-workspace:has(.hud-task-field-focus) .holo-orbit-main {
+  z-index: 50;
 }
 
 .hud-projection-panel {

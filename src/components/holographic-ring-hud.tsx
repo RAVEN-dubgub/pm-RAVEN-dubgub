@@ -114,7 +114,7 @@ export function HolographicRingHud() {
 
             <circle cx="200" cy="200" r="118" className="holo-hud-stroke holo-hud-stroke-segmented" />
 
-            {/* Nav segment arcs — 120° each */}
+            {/* Nav segment arcs: 120° each */}
 
             {HOLO_NAV_SEGMENTS.map((segment) => {
 
@@ -166,7 +166,7 @@ export function HolographicRingHud() {
 
 
 
-        {/* Orbit nav labels — visual ring ↔ menu connection */}
+        {/* Orbit nav labels: visual ring ↔ menu connection */}
 
         <div className="holo-hud-orbit-labels">
 

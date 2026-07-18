@@ -15,7 +15,7 @@ const STEPS = [
     href: "/tasks",
   },
   {
-    title: "Assign to a peer — not yourself",
+    title: "Assign to a peer - not yourself",
     body: "Use the Assignee dropdown. Pick another cohort member (not “(you)”) so the team can track who owns what.",
     href: "/tasks",
   },

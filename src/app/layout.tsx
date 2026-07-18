@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cohort PM | RAVEN-dubgub",
   description:
-    "Hult Cohort Developer Program — Week 1 project management platform submission.",
+    "Hult Cohort Developer Program - Week 1 project management platform submission.",
 };
 
 export default function RootLayout({

@@ -166,7 +166,7 @@ function cohortMotivationCopy(
   peersWithOpenTasks: number,
 ) {
   if (rate >= 80) {
-    return "The cohort is crushing it — keep shipping together.";
+    return "The cohort is crushing it - keep shipping together.";
   }
   if (rate >= 50) {
     return "Halfway there. Every task you finish lifts the whole team.";
@@ -175,17 +175,17 @@ function cohortMotivationCopy(
     return "Progress is visible. Ship one more task today and pull the cohort forward.";
   }
   if (activeMembers > 1) {
-    return `${activeMembers} members are in motion — be the spark that gets tasks moving.`;
+    return `${activeMembers} members are in motion - be the spark that gets tasks moving.`;
   }
   if (peersWithOpenTasks > 0) {
-    return `${peersWithOpenTasks} peer${peersWithOpenTasks === 1 ? "" : "s"} have open work — your turn to contribute.`;
+    return `${peersWithOpenTasks} peer${peersWithOpenTasks === 1 ? "" : "s"} have open work - your turn to contribute.`;
   }
-  return "Be the first to ship — create a project and invite the cohort in.";
+  return "Be the first to ship - create a project and invite the cohort in.";
 }
 
 function overdueCohortNudge(overdue: number) {
   if (overdue === 0) return null;
-  return `${overdue} overdue task${overdue === 1 ? "" : "s"} on your plate — clearing ${overdue === 1 ? "it" : "them"} helps the cohort stay on track.`;
+  return `${overdue} overdue task${overdue === 1 ? "" : "s"} on your plate - clearing ${overdue === 1 ? "it" : "them"} helps the cohort stay on track.`;
 }
 
 export function DashboardMetrics() {

@@ -47,7 +47,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       // Full navigation ensures the new session cookie is sent on the next page load.
       window.location.assign("/dashboard");
     } catch {
-      setError("Network error — check your connection and try again.");
+      setError("Network error - check your connection and try again.");
     } finally {
       setLoading(false);
     }

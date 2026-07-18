@@ -1,8 +1,8 @@
-# Cohort PM Platform — RAVEN-dubgub
+# Cohort PM Platform - RAVEN-dubgub
 
 Hult Cohort Developer Program · **Week 1 · Project 1** submission.
 
-**Purpose:** motivate cohort work through visible progress and peer assignment — not solo task tracking. The dashboard shows cohort-wide completion, who is actively shipping, recent wins, and tasks peers assigned to you so accountability stays social.
+**Purpose:** motivate cohort work through visible progress and peer assignment - not solo task tracking. The dashboard shows cohort-wide completion, who is actively shipping, recent wins, and tasks peers assigned to you so accountability stays social.
 
 Production project management platform for the cohort: projects, tasks, assignments, filters, and a motivation-focused progress dashboard.
 
@@ -10,7 +10,7 @@ Production project management platform for the cohort: projects, tasks, assignme
 
 `https://pm-raven-dubgub.vercel.app`
 
-> **Note:** Set `DATABASE_URL` + `AUTH_SECRET` on Vercel and run `prisma migrate deploy` for a working DB — see [DEPLOY.md](./DEPLOY.md).
+> **Note:** Set `DATABASE_URL` + `AUTH_SECRET` on Vercel and run `prisma migrate deploy` for a working DB - see [DEPLOY.md](./DEPLOY.md).
 
 ## Quick start (local)
 
@@ -83,31 +83,31 @@ Staff smoke account (`staff-review@hult-cohort.test`) projects appear muted at t
 
 ## Baseline features (rubric)
 
-- [x] Projects — create, edit, archive; ≥1 per user
-- [x] Tasks — title, description, status, assignee, **priority**, **blockers**
-- [x] Status workflow — todo / in progress / done
-- [x] Assignment — assign to any cohort member by account (dropdown labels peers vs **(you)**)
-- [x] Multi-user auth — email + password; supports 30+ accounts
-- [x] Task list views — filter by project, assignee, status, **priority**; **List | Board** kanban toggle
-- [x] HTTPS deployment — Vercel-ready
+- [x] Projects - create, edit, archive; ≥1 per user
+- [x] Tasks - title, description, status, assignee, **priority**, **blockers**
+- [x] Status workflow - todo / in progress / done
+- [x] Assignment - assign to any cohort member by account (dropdown labels peers vs **(you)**)
+- [x] Multi-user auth - email + password; supports 30+ accounts
+- [x] Task list views - filter by project, assignee, status, **priority**; **List | Board** kanban toggle
+- [x] HTTPS deployment - Vercel-ready
 
 ## Tier 1 features (Jul 2026)
 
-- [x] **Priority** — Low / Medium / High on create & edit; color badges; filter on Tasks page
-- [x] **Kanban board** — Board view with To do / In progress / Done columns; click status to move; horizontal scroll on mobile
-- [x] **Task blockers** — optional “Blocked by” (same project); **Blocked** badge until blocker is Done; circular deps rejected
-- [x] **Dashboard chart** — tasks-by-status bar chart + completion % + overdue count (CSS, no chart library)
-- [x] **In-app help** — collapsible “How to use” on Dashboard (create project → task → assign peer → archive vs delete)
+- [x] **Priority** - Low / Medium / High on create & edit; color badges; filter on Tasks page
+- [x] **Kanban board** - Board view with To do / In progress / Done columns; click status to move; horizontal scroll on mobile
+- [x] **Task blockers** - optional “Blocked by” (same project); **Blocked** badge until blocker is Done; circular deps rejected
+- [x] **Dashboard chart** - tasks-by-status bar chart + completion % + overdue count (CSS, no chart library)
+- [x] **In-app help** - collapsible “How to use” on Dashboard (create project → task → assign peer → archive vs delete)
 - [x] Smoke/test projects de-emphasized in default project list (sorted last, muted styling)
 
-## Tier 2 features — PMP habits (Jul 2026)
+## Tier 2 features - PMP habits (Jul 2026)
 
 Inspired by [r/PMP community habits](https://www.reddit.com/r/pmp/) (proactive risk communication, standups, definition of done, weekly stakeholder updates):
 
-- [x] **At-risk project flag** — owners mark projects at risk; cohort dashboard surfaces flagged projects with status notes
-- [x] **Weekly cohort update** — project owners post a short weekly update (risks, blockers, next steps); dashboard nudges if stale > 7 days
-- [x] **Definition of done** — optional per-task completion criteria so “done” means outcome, not just activity
-- [x] **Standup check-in** — assignees on in-progress tasks log a quick check-in note; dashboard nudges if stale > 2 days
+- [x] **At-risk project flag** - owners mark projects at risk; cohort dashboard surfaces flagged projects with status notes
+- [x] **Weekly cohort update** - project owners post a short weekly update (risks, blockers, next steps); dashboard nudges if stale > 7 days
+- [x] **Definition of done** - optional per-task completion criteria so “done” means outcome, not just activity
+- [x] **Standup check-in** - assignees on in-progress tasks log a quick check-in note; dashboard nudges if stale > 2 days
 
 ## Differentiating features
 
@@ -120,26 +120,26 @@ Inspired by [r/PMP community habits](https://www.reddit.com/r/pmp/) (proactive r
 
 Research-backed UX (progress visibility, peer accountability, onboarding checklists):
 
-- **Cohort momentum hero** — cohort-wide completion %, active members, motivating copy
-- **Your contribution panel** — personal tasks shipped + share of cohort completions
-- **Peer accountability** — "From [name]" badges on peer-assigned tasks; dashboard nudge for unstarted peer work
-- **Recent cohort wins** — live feed of tasks the team just completed
-- **Onboarding checklist** — 4-step setup guide for new cohort members (project → task → assign peer)
-- **Overdue alert banner** — framed as helping the cohort stay on track
-- **Project momentum panel** — per-project progress bars on the dashboard
-- **PM habit nudges** — weekly update + standup check-in reminders on dashboard (r/PMP-inspired)
-- **At-risk projects panel** — visible early escalation for cohort stakeholders
-- **Status pills + due-soon badges** — clearer task scanning
-- **Empty states with CTAs** — no blank walls when projects/tasks are missing
-- **Mobile nav** — bottom tab bar + collapsible menu for small screens
+- **Cohort momentum hero** - cohort-wide completion %, active members, motivating copy
+- **Your contribution panel** - personal tasks shipped + share of cohort completions
+- **Peer accountability** - "From [name]" badges on peer-assigned tasks; dashboard nudge for unstarted peer work
+- **Recent cohort wins** - live feed of tasks the team just completed
+- **Onboarding checklist** - 4-step setup guide for new cohort members (project → task → assign peer)
+- **Overdue alert banner** - framed as helping the cohort stay on track
+- **Project momentum panel** - per-project progress bars on the dashboard
+- **PM habit nudges** - weekly update + standup check-in reminders on dashboard (r/PMP-inspired)
+- **At-risk projects panel** - visible early escalation for cohort stakeholders
+- **Status pills + due-soon badges** - clearer task scanning
+- **Empty states with CTAs** - no blank walls when projects/tasks are missing
+- **Mobile nav** - bottom tab bar + collapsible menu for small screens
 
 ## Deploy (Vercel)
 
 1. Push this repo to GitHub (`pm-RAVEN-dubgub`, public, MIT).
 2. Import in [Vercel](https://vercel.com/new).
 3. Add environment variables:
-   - `DATABASE_URL` — Neon pooled connection string
-   - `AUTH_SECRET` — random 32+ char string (`openssl rand -base64 32`)
+   - `DATABASE_URL` - Neon pooled connection string
+   - `AUTH_SECRET` - random 32+ char string (`openssl rand -base64 32`)
 4. Deploy, then run migrations against production DB:
    ```bash
    DATABASE_URL="your-prod-url" npx prisma migrate deploy
@@ -168,7 +168,7 @@ Built with **Cursor Agent** (Claude):
 |------|-------|
 | Repo | `hult-cohort-fall26-boston/pm-RAVEN-dubgub` (or your fork until org invite) |
 | PR title | `[Project 1] Submission - RAVEN-dubgub` |
-| Deadline | **Sunday Jul 19, 2026 · 17:00 ET** — PR merged to `main` |
+| Deadline | **Sunday Jul 19, 2026 · 17:00 ET** - PR merged to `main` |
 | Platform page | https://site-nine-rouge-68.vercel.app/program/phase-1-project-1 |
 
 PR body must include: Production URL, setup steps, architecture summary, motivation notes, known limitations, agent usage.

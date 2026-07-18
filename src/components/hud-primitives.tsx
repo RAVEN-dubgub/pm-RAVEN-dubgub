@@ -246,7 +246,7 @@ export function StatusArc({ status, size = 52 }: StatusArcProps) {
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium uppercase tracking-wider text-slate-400">
-        {status === "IN_PROGRESS" ? "WIP" : status === "DONE" ? "✓" : "—"}
+        {status === "IN_PROGRESS" ? "WIP" : status === "DONE" ? "✓" : "-"}
       </span>
     </div>
   );

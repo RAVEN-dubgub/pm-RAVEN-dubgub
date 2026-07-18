@@ -59,7 +59,7 @@ function buildTips(context: TaskCoachContext, hasRepo: boolean) {
     );
   }
 
-  tips.push("Keep the diff small — one focused change set beats a large refactor.");
+  tips.push("Keep the diff small - one focused change set beats a large refactor.");
   tips.push("Read nearby files first and match existing naming, types, and patterns.");
 
   if (!hasRepo) {
@@ -71,13 +71,13 @@ function buildTips(context: TaskCoachContext, hasRepo: boolean) {
   if (task.definitionOfDone?.trim()) {
     tips.push("Use the definition of done as your checklist before opening a PR.");
   } else {
-    tips.push("Write a short definition of done if scope is unclear — it prevents scope creep.");
+    tips.push("Write a short definition of done if scope is unclear - it prevents scope creep.");
   }
 
   tips.push("Run `npm run lint` and `npm run build` before commit; fix failures in the same branch.");
 
   if (task.priority === "HIGH" || task.priority === "URGENT") {
-    tips.push("This task is high priority — ship a minimal working slice first, polish second.");
+    tips.push("This task is high priority - ship a minimal working slice first, polish second.");
   }
 
   return tips.slice(0, 6);
@@ -85,10 +85,10 @@ function buildTips(context: TaskCoachContext, hasRepo: boolean) {
 
 function buildCursorPrompt(context: TaskCoachContext, doneWhen: string[]) {
   const { task, project, assigneeName } = context;
-  const description = task.description?.trim() || "(No description — infer scope from the title.)";
+  const description = task.description?.trim() || "(No description - infer scope from the title.)";
   const dod =
     task.definitionOfDone?.trim() ||
-    "(No definition of done — use the Done when list below as acceptance criteria.)";
+    "(No definition of done - use the Done when list below as acceptance criteria.)";
 
   const steps = [
     "1. Locate the relevant files for this task in the repo.",
@@ -100,7 +100,7 @@ function buildCursorPrompt(context: TaskCoachContext, doneWhen: string[]) {
 
   if (task.blockedBy && task.blockedBy.status !== "DONE") {
     steps.unshift(
-      `0. Blocked by "${task.blockedBy.title}" — finish or unblock that task before coding.`,
+      `0. Blocked by "${task.blockedBy.title}" - finish or unblock that task before coding.`,
     );
   }
 
@@ -125,7 +125,7 @@ function buildCursorPrompt(context: TaskCoachContext, doneWhen: string[]) {
     ...steps,
     ``,
     `## Before commit`,
-    `- Run \`npm run lint\` and \`npm run build\` — both must pass.`,
+    `- Run \`npm run lint\` and \`npm run build\` - both must pass.`,
     `- Keep unrelated files out of the commit.`,
     `- Use safe git commands only (no force push, no hard reset).`,
   ].join("\n");
@@ -192,7 +192,7 @@ export function generateTaskCoachFromTemplate(context: TaskCoachContext): CoachR
   ];
 
   if (context.task.blockedBy && context.task.blockedBy.status !== "DONE") {
-    summaryParts.push(`Blocked by "${context.task.blockedBy.title}" — resolve that first.`);
+    summaryParts.push(`Blocked by "${context.task.blockedBy.title}" - resolve that first.`);
   }
 
   const result: CoachResult = {

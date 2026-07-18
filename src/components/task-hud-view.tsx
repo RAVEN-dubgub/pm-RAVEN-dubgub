@@ -501,7 +501,7 @@ export function TaskHudView({
 
           const isFocused = focusedId === task.id;
 
-          // Projection panel holds expanded content — keep orbit tiles compact and dimmed.
+          // Projection panel holds expanded content; keep orbit tiles compact and dimmed.
           const isDimmed = hasFocus;
 
           const overdue = isOverdue(task.dueDate, task.status);
@@ -633,7 +633,7 @@ export function TaskHudView({
         </div>
       )}
 
-      {/* Projection overlay — JARVIS foreground panel */}
+      {/* Projection overlay: JARVIS foreground panel */}
 
       {focusedTask && (
         <div
@@ -646,8 +646,8 @@ export function TaskHudView({
       )}
 
       {focusedTask && (
-        <div className="hud-projection-layer fixed inset-x-3 top-24 z-50 md:inset-x-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-2xl md:-translate-x-1/2 md:-translate-y-1/2">
-          <article className="hud-projection-panel hud-scan-sweep mx-auto max-h-[min(80vh,720px)] max-w-lg overflow-y-auto md:max-w-2xl">
+        <div className="hud-projection-layer">
+          <article className="hud-projection-panel hud-scan-sweep mx-auto w-full max-w-lg md:max-w-2xl">
             <header className="mb-3 flex items-center justify-between gap-2">
               <p className="jarvis-status-line">Task projection</p>
 

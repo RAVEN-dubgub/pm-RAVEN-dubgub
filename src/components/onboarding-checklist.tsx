@@ -37,7 +37,7 @@ function step4Hint(
   if (otherCohortMembers === 0) {
     return "Ask a cohort peer to sign up, then assign one of your tasks to them (not yourself).";
   }
-  return `On Tasks, change a task's Assignee on your project to someone else — ${otherCohortMembers} other member${otherCohortMembers === 1 ? "" : "s"} are registered. Assigning to yourself does not count. Cross-project assignments count too.`;
+  return `On Tasks, change a task's Assignee on your project to someone else - ${otherCohortMembers} other member${otherCohortMembers === 1 ? "" : "s"} are registered. Assigning to yourself does not count. Cross-project assignments count too.`;
 }
 
 export function OnboardingChecklist({

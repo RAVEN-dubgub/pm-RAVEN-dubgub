@@ -425,7 +425,7 @@ export function TaskBoard({
           ))}
         </select>
         <span className="mt-1 block text-xs text-slate-500">
-          For onboarding step 4, pick another member — not &ldquo;(you)&rdquo;.
+          For onboarding step 4, pick another member - not &ldquo;(you)&rdquo;.
         </span>
       </label>
       <label>
@@ -600,7 +600,7 @@ export function TaskBoard({
               ? "No archived tasks."
               : hasActiveFilters
                 ? "No tasks match these filters."
-                : "No tasks in orbit — tap + to add one."}
+                : "No tasks in orbit - tap + to add one."}
           </p>
         </div>
       ) : viewMode === "hud" ? (

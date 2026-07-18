@@ -110,7 +110,7 @@ export function ProjectManager({
         const data = await response.json().catch(() => null);
         setCreateError(
           data?.error === "Unauthorized"
-            ? "Session expired — please sign in again."
+            ? "Session expired - please sign in again."
             : "Could not create project. Please try again.",
         );
         return;
@@ -203,7 +203,7 @@ export function ProjectManager({
   useEffect(() => {
     if (!showArchived && activeProjects.length === 0) {
       setReadout({
-        metric: "—",
+        metric: "-",
         primary: "NO PROJECTS",
         secondary: "tap + to create",
       });
@@ -372,7 +372,7 @@ export function ProjectManager({
           <p className="text-sm text-slate-400">
             {showArchived
               ? "No archived projects."
-              : "No active projects in orbit — tap + to create one."}
+              : "No active projects in orbit - tap + to create one."}
           </p>
           {!showArchived && (
             <button

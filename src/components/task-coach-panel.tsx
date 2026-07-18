@@ -44,7 +44,7 @@ export function TaskCoachPanel({
       }
       setCoach(data.coach);
     } catch {
-      setError("Network error — try again.");
+      setError("Network error - try again.");
     } finally {
       setLoading(false);
     }
