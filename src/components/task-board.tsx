@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HoloWorkspace } from "@/components/holo-workspace";
 import { TaskHudFilters, TaskHudView } from "@/components/task-hud-view";
+import {
+  buildAssigneePickerOptions,
+  buildTaskAssigneeOptions,
+} from "@/lib/assignee-options";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
 import { TASK_STATUSES } from "@/lib/types";
 
@@ -101,6 +105,16 @@ export function TaskBoard({
   const createBlockerOptions = useMemo(
     () => tasks.filter((task) => task.project.id === projectId && !task.archived),
     [tasks, projectId],
+  );
+
+  const assigneeFilterUsers = useMemo(
+    () => buildTaskAssigneeOptions(tasks, users, currentUserId),
+    [tasks, users, currentUserId],
+  );
+
+  const assigneePickerUsers = useMemo(
+    () => buildAssigneePickerOptions(users, currentUserId),
+    [users, currentUserId],
   );
 
   function blockerOptionsForTask(task: TaskItem) {
@@ -418,7 +432,7 @@ export function TaskBoard({
           aria-label="Assign to cohort member"
         >
           <option value="">Unassigned</option>
-          {users.map((user) => (
+          {assigneePickerUsers.map((user) => (
             <option key={user.id} value={user.id}>
               {assigneeLabel(user, currentUserId)}
             </option>
@@ -476,7 +490,7 @@ export function TaskBoard({
           </p>
           <TaskHudFilters
               projects={projects}
-              users={users}
+              users={assigneeFilterUsers}
               currentUserId={currentUserId}
               projectFilter={projectFilter}
               assigneeFilter={assigneeFilter}
@@ -606,7 +620,7 @@ export function TaskBoard({
       ) : viewMode === "hud" ? (
         <TaskHudView
           tasks={tasks}
-          users={users}
+          users={assigneeFilterUsers}
           currentUserId={currentUserId}
           checkInDrafts={checkInDrafts}
           onCheckInDraftChange={(id, value) =>

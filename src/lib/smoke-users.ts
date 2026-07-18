@@ -1,6 +1,13 @@
 const SMOKE_EMAILS = new Set(["staff-review@hult-cohort.test"]);
 
-const SMOKE_NAME_PATTERNS = ["test user", "smoke test", "smoke user"];
+const SMOKE_NAME_PATTERNS = [
+  "test user",
+  "smoke test",
+  "smoke user",
+  "login test",
+  "nav test",
+  "post deploy",
+];
 
 export function isSmokeUser(user: { email: string; name: string }) {
   if (SMOKE_EMAILS.has(user.email.toLowerCase())) return true;

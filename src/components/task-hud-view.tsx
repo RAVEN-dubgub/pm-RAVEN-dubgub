@@ -96,6 +96,12 @@ function assigneeShort(user: UserOption) {
   return user.name.trim() || user.email.split("@")[0];
 }
 
+function assigneeOptionsForTask(task: TaskItem, users: UserOption[]) {
+  if (!task.assignee) return users;
+  if (users.some((user) => user.id === task.assignee?.id)) return users;
+  return [...users, task.assignee];
+}
+
 function isPeerAssigned(task: TaskItem, currentUserId: string) {
   return (
     task.assignee?.id === currentUserId &&
@@ -379,7 +385,7 @@ function TaskTileBody({
           >
             <option value="">Unassigned</option>
 
-            {users.map((user) => (
+            {assigneeOptionsForTask(task, users).map((user) => (
               <option key={user.id} value={user.id}>
                 {assigneeLabel(user, currentUserId)}
               </option>
