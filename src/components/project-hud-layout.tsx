@@ -58,6 +58,8 @@ type ProjectHudLayoutProps = {
   ) => void;
 
   onArchiveProject: (id: string, archived: boolean) => void;
+
+  onDeleteProject: (id: string) => void;
 };
 
 function projectProgress(project: Project) {
@@ -145,6 +147,8 @@ function ProjectHudModule({
 
   onArchiveProject,
 
+  onDeleteProject,
+
   focused = false,
 
   dimmed = false,
@@ -175,6 +179,8 @@ function ProjectHudModule({
   ) => void;
 
   onArchiveProject: (id: string, archived: boolean) => void;
+
+  onDeleteProject: (id: string) => void;
 
   focused?: boolean;
 
@@ -381,15 +387,25 @@ function ProjectHudModule({
             </>
           )}
 
-          <button
-            type="button"
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
 
-            onClick={() => onArchiveProject(project.id, !project.archived)}
+              onClick={() => onArchiveProject(project.id, !project.archived)}
 
-            className="text-xs text-slate-500 hover:text-white"
-          >
-            {project.archived ? "Restore" : "Archive"}
-          </button>
+              className="text-xs text-slate-500 hover:text-white"
+            >
+              {project.archived ? "Restore" : "Archive"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onDeleteProject(project.id)}
+              className="text-xs text-rose-400/80 hover:text-rose-300"
+            >
+              Delete permanently
+            </button>
+          </div>
         </div>
       )}
 
@@ -422,6 +438,8 @@ export function ProjectHudLayout({
   onUpdateProject,
 
   onArchiveProject,
+
+  onDeleteProject,
 }: ProjectHudLayoutProps) {
   const { focusedId, toggle, focus } = useHoloFocus<string>(null, "project");
 
@@ -436,6 +454,12 @@ export function ProjectHudLayout({
 
     return () => window.removeEventListener("keydown", onEscape);
   }, [focus]);
+
+  useEffect(() => {
+    if (focusedId !== null && !projects.some((project) => project.id === focusedId)) {
+      focus(null);
+    }
+  }, [projects, focusedId, focus]);
 
   const orbitRadius = useMemo(
     () => 260 + Math.min(Math.max(projects.length - 1, 0) * 20, 120),
@@ -504,6 +528,8 @@ export function ProjectHudLayout({
     onUpdateProject,
 
     onArchiveProject,
+
+    onDeleteProject,
   };
 
   return (

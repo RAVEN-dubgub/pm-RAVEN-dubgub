@@ -137,6 +137,26 @@ export function ProjectManager({
     );
     if (!confirmed) return;
 
+    setProjects((current) => {
+      if (showArchived) {
+        return archived
+          ? current.map((project) =>
+              project.id === id ? { ...project, archived: true } : project,
+            )
+          : current.filter((project) => project.id !== id);
+      }
+      return archived
+        ? current.filter((project) => project.id !== id)
+        : current.map((project) =>
+            project.id === id ? { ...project, archived: false } : project,
+          );
+    });
+
+    if (editingUpdateId === id) {
+      setEditingUpdateId(null);
+      setWeeklyUpdateDraft("");
+    }
+
     const response = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -146,10 +166,43 @@ export function ProjectManager({
 
     if (!response.ok) {
       setError(`Could not ${action} project. Please try again.`);
+      await loadProjects();
       return;
     }
 
     await loadProjects();
+  }
+
+  async function deleteProject(id: string) {
+    const project = projects.find((item) => item.id === id);
+    const confirmed = window.confirm(
+      project
+        ? `Permanently delete "${project.title}"? This cannot be undone.`
+        : "Permanently delete this project? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setProjects((current) => current.filter((item) => item.id !== id));
+
+    if (editingUpdateId === id) {
+      setEditingUpdateId(null);
+      setWeeklyUpdateDraft("");
+    }
+
+    const response = await fetch(`/api/projects/${id}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      setError(
+        data.error === "Forbidden"
+          ? "You can only delete projects you own."
+          : "Could not delete project. Please try again.",
+      );
+      await loadProjects();
+    }
   }
 
   async function updateProject(
@@ -386,7 +439,7 @@ export function ProjectManager({
         </div>
       ) : (
         <ProjectHudLayout
-          projects={projects}
+          projects={showArchived ? projects : activeProjects}
           currentUserId={currentUserId}
           editingUpdateId={editingUpdateId}
           weeklyUpdateDraft={weeklyUpdateDraft}
@@ -399,6 +452,7 @@ export function ProjectManager({
           }}
           onUpdateProject={(id, patch) => void updateProject(id, patch)}
           onArchiveProject={(id, archived) => void archiveProject(id, archived)}
+          onDeleteProject={(id) => void deleteProject(id)}
         />
       )}
     </HoloWorkspace>

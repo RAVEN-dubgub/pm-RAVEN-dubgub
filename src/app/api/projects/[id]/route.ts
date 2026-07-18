@@ -61,6 +61,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
+  if (existing.ownerId !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   if (parsed.data.githubRepoUrl !== undefined) {
     const github = parseGithubRepoUrl(parsed.data.githubRepoUrl);
     if (!github.ok) {
@@ -102,4 +106,24 @@ export async function PATCH(request: Request, context: RouteContext) {
   });
 
   return NextResponse.json({ project });
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const user = await requireUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const existing = await prisma.project.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+
+  if (existing.ownerId !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await prisma.project.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }
