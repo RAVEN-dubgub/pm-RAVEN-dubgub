@@ -22,7 +22,13 @@ type TaskItem = {
   dueDate: string | null;
   checkInNote: string | null;
   lastCheckInAt: string | null;
-  project: { id: string; title: string; ownerId: string; owner: ProjectOwner };
+  project: {
+    id: string;
+    title: string;
+    ownerId: string;
+    githubRepoUrl?: string | null;
+    owner: ProjectOwner;
+  };
   assignee: UserOption | null;
   blockedBy: BlockerRef | null;
 };
@@ -465,6 +471,9 @@ export function TaskBoard({
       top={
         <div className="space-y-2">
           <p className="jarvis-status-line">Task orbit · cohort work queue</p>
+          <p className="text-xs text-slate-500">
+            Focus a task → Get Cursor plan → paste in Cursor → push PR
+          </p>
           <TaskHudFilters
               projects={projects}
               users={users}

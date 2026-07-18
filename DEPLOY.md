@@ -38,6 +38,7 @@ Project: `raven-dubgubs-projects/pm-raven-dubgub`
 |------|-------|
 | `DATABASE_URL` | Neon pooled connection string |
 | `AUTH_SECRET` | Random 32+ char string (see below) |
+| `OPENAI_API_KEY` | OpenAI API key for Task Coach (`gpt-4o-mini`) |
 
 Generate `AUTH_SECRET` (PowerShell):
 
@@ -67,6 +68,11 @@ npx vercel env add DATABASE_URL development
 npx vercel env add AUTH_SECRET production
 npx vercel env add AUTH_SECRET preview
 npx vercel env add AUTH_SECRET development
+
+# OPENAI_API_KEY — paste OpenAI key when prompted (Task Coach)
+npx vercel env add OPENAI_API_KEY production
+npx vercel env add OPENAI_API_KEY preview
+npx vercel env add OPENAI_API_KEY development
 ```
 
 ---
@@ -99,7 +105,8 @@ Or push to `main` — GitHub integration auto-deploys once env vars exist.
 1. Open production URL (shown after deploy, e.g. `https://pm-raven-dubgub.vercel.app`)
 2. **Sign up** with a test account
 3. Create a project → add a task → assign to a peer
-4. Check **Dashboard** for cohort completion bar and onboarding checklist
+4. Focus a task → **Get Cursor plan** → verify tips and copy buttons
+5. Check **Dashboard** for cohort completion bar and onboarding checklist
 
 ---
 
@@ -123,6 +130,8 @@ Commit and push.
 |-------|-----|
 | 500 on signup/login | `DATABASE_URL` missing or migrations not run |
 | "Unauthorized" everywhere | `AUTH_SECRET` not set on Vercel |
+| Task Coach returns 503 | `OPENAI_API_KEY` not set on Vercel |
+| Invalid GitHub URL on project | Use full URL: `https://github.com/owner/repo` |
 | Build fails on Vercel | Check build logs; `postinstall` runs `prisma generate` |
 | Local dev | Copy `.env.example` → `.env`, use Neon dev branch URL |
 

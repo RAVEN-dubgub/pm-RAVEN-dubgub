@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { isSmokeUser } from "@/lib/smoke-users";
 
@@ -18,6 +18,8 @@ type Project = {
   title: string;
 
   description: string | null;
+
+  githubRepoUrl: string | null;
 
   archived: boolean;
 
@@ -49,7 +51,10 @@ type ProjectHudLayoutProps = {
 
   onCancelWeeklyUpdate: () => void;
 
-  onUpdateProject: (id: string, patch: { atRisk?: boolean }) => void;
+  onUpdateProject: (
+    id: string,
+    patch: { atRisk?: boolean; githubRepoUrl?: string | null },
+  ) => void;
 
   onArchiveProject: (id: string, archived: boolean) => void;
 };
@@ -64,6 +69,39 @@ function projectProgress(project: Project) {
     total,
     progress: total === 0 ? 0 : Math.round((done / total) * 100),
   };
+}
+
+function ProjectGithubRepoField({
+  projectTitle,
+  savedUrl,
+  onSave,
+}: {
+  projectTitle: string;
+  savedUrl: string | null;
+  onSave: (url: string | null) => void;
+}) {
+  const [githubDraft, setGithubDraft] = useState(savedUrl ?? "");
+
+  return (
+    <div className="space-y-1">
+      <label className="block text-[10px] text-slate-500">GitHub repo URL</label>
+      <input
+        className="hud-tile-input w-full text-xs"
+        placeholder="https://github.com/org/repo"
+        value={githubDraft}
+        onChange={(event) => setGithubDraft(event.target.value)}
+        aria-label={`GitHub repo URL for ${projectTitle}`}
+      />
+      <button
+        type="button"
+        onClick={() => onSave(githubDraft.trim() || null)}
+        className="hud-tile-btn text-xs"
+        disabled={(githubDraft.trim() || null) === (savedUrl ?? null)}
+      >
+        Save repo URL
+      </button>
+    </div>
+  );
 }
 
 function ProjectHudModule({
@@ -113,7 +151,10 @@ function ProjectHudModule({
 
   onCancelWeeklyUpdate: () => void;
 
-  onUpdateProject: (id: string, patch: { atRisk?: boolean }) => void;
+  onUpdateProject: (
+    id: string,
+    patch: { atRisk?: boolean; githubRepoUrl?: string | null },
+  ) => void;
 
   onArchiveProject: (id: string, archived: boolean) => void;
 
@@ -310,6 +351,15 @@ function ProjectHudModule({
                   </button>
                 </div>
               )}
+
+              <ProjectGithubRepoField
+                key={`${project.id}-${project.githubRepoUrl ?? ""}`}
+                projectTitle={project.title}
+                savedUrl={project.githubRepoUrl}
+                onSave={(url) =>
+                  onUpdateProject(project.id, { githubRepoUrl: url })
+                }
+              />
             </>
           )}
 

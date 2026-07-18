@@ -11,7 +11,9 @@
     "db:migrate": "prisma migrate deploy"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.16",
     "@prisma/client": "^5.22.0",
+    "ai": "^7.0.31",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "next": "16.2.10",

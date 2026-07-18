@@ -38,6 +38,7 @@ model Project {
   atRisk          Boolean   @default(false)
   weeklyUpdate    String?
   weeklyUpdateAt  DateTime?
+  githubRepoUrl   String?
   ownerId         String
   owner           User      @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   tasks           Task[]

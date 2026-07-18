@@ -20,6 +20,7 @@ import {
   StatusArc,
 } from "@/components/hud-primitives";
 
+import { TaskCoachPanel } from "@/components/task-coach-panel";
 import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
 
@@ -52,7 +53,13 @@ type TaskItem = {
 
   lastCheckInAt: string | null;
 
-  project: { id: string; title: string; ownerId: string; owner: UserOption };
+  project: {
+    id: string;
+    title: string;
+    ownerId: string;
+    githubRepoUrl?: string | null;
+    owner: UserOption;
+  };
 
   assignee: UserOption | null;
 
@@ -394,6 +401,15 @@ function TaskTileBody({
             Check in
           </button>
         </div>
+      )}
+
+      {expanded && !task.archived && (
+        <TaskCoachPanel
+          taskId={task.id}
+          projectId={task.project.id}
+          blockedBy={task.blockedBy}
+          githubRepoUrl={task.project.githubRepoUrl ?? null}
+        />
       )}
 
       <p className="mt-2 text-[10px] text-slate-600">

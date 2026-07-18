@@ -9,6 +9,7 @@ export const taskListInclude = {
       id: true,
       title: true,
       ownerId: true,
+      githubRepoUrl: true,
       owner: { select: { id: true, name: true, email: true } },
     },
   },

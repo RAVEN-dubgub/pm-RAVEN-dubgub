@@ -9,6 +9,7 @@ type Project = {
   id: string;
   title: string;
   description: string | null;
+  githubRepoUrl: string | null;
   archived: boolean;
   atRisk: boolean;
   weeklyUpdate: string | null;
@@ -29,6 +30,7 @@ export function ProjectManager({
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [githubRepoUrl, setGithubRepoUrl] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -97,7 +99,11 @@ export function ProjectManager({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({
+          title,
+          description,
+          githubRepoUrl: githubRepoUrl.trim() || null,
+        }),
       });
 
       if (!response.ok) {
@@ -112,6 +118,7 @@ export function ProjectManager({
 
       setTitle("");
       setDescription("");
+      setGithubRepoUrl("");
       setShowArchived(false);
       setShowCreateForm(false);
       await loadProjects();
@@ -146,7 +153,7 @@ export function ProjectManager({
 
   async function updateProject(
     id: string,
-    patch: { atRisk?: boolean; weeklyUpdate?: string | null },
+    patch: { atRisk?: boolean; weeklyUpdate?: string | null; githubRepoUrl?: string | null },
   ) {
     const response = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
@@ -237,6 +244,17 @@ export function ProjectManager({
           rows={2}
           disabled={isCreating}
           aria-label="Project description"
+        />
+      </label>
+      <label>
+        <span className="sr-only">GitHub repo URL</span>
+        <input
+          className="holo-input w-full px-3 py-2"
+          placeholder="GitHub repo URL (optional)"
+          value={githubRepoUrl}
+          onChange={(event) => setGithubRepoUrl(event.target.value)}
+          disabled={isCreating}
+          aria-label="GitHub repo URL"
         />
       </label>
       {createError ? (
