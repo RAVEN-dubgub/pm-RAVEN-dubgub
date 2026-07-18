@@ -71,6 +71,31 @@ function projectProgress(project: Project) {
   };
 }
 
+function ProjectOrbitChip({
+  project,
+  onSelect,
+}: {
+  project: Project;
+  onSelect: () => void;
+}) {
+  const { progress } = projectProgress(project);
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect();
+      }}
+      className="hud-orbit-chip hud-project-orbit-chip"
+      aria-label={`Switch focus to ${project.title}`}
+    >
+      <span className="hud-orbit-chip-metric">{progress}%</span>
+      <span className="truncate">{project.title}</span>
+    </button>
+  );
+}
+
 function ProjectGithubRepoField({
   projectTitle,
   savedUrl,
@@ -463,6 +488,11 @@ export function ProjectHudLayout({
 
   if (projects.length === 0) return null;
 
+  const focusedProject =
+    focusedId !== null
+      ? sorted.find((project) => project.id === focusedId) ?? null
+      : null;
+
   const moduleProps = {
     currentUserId,
 
@@ -491,7 +521,9 @@ export function ProjectHudLayout({
     >
       {/* Desktop orbital constellation */}
 
-      <div className="relative hidden min-h-[580px] md:block">
+      <div
+        className={`hud-project-orbit-field relative hidden md:block ${hasFocus ? "hud-project-orbit-field-focus" : "min-h-[580px]"}`}
+      >
         {satellites.map((project, index) => {
           const slot = orbitSlot(
             index,
@@ -502,26 +534,42 @@ export function ProjectHudLayout({
 
           const isFeatured = project.id === featured.id;
           const isFocused = focusedId === project.id;
-          const isDimmed = hasFocus && !isFocused;
+
+          if (hasFocus && isFocused) return null;
+
+          const orbitStyle = {
+            left: `calc(50% + ${slot.x}px)`,
+            top: `calc(50% + ${slot.y}px)`,
+            transform: "translate(-50%, -50%)",
+            zIndex: isFeatured ? 15 : 5 + index,
+          } as const;
+
+          if (hasFocus) {
+            return (
+              <div
+                key={project.id}
+                className="hud-project-orbit-chip-slot absolute"
+                style={orbitStyle}
+              >
+                <ProjectOrbitChip
+                  project={project}
+                  onSelect={() => focus(project.id)}
+                />
+              </div>
+            );
+          }
 
           return (
             <div
               key={project.id}
               className={`hud-project-satellite-orbit absolute ${isFeatured ? "w-[min(300px,30vw)]" : "w-[min(260px,24vw)]"}`}
-              style={{
-                left: `calc(50% + ${slot.x}px)`,
-                top: `calc(50% + ${slot.y}px)`,
-                transform: isFocused
-                  ? "translate(-50%, -50%) scale(1.06) translateZ(32px)"
-                  : "translate(-50%, -50%)",
-                zIndex: isFocused ? 25 : isFeatured ? 15 : 5 + index,
-              }}
+              style={orbitStyle}
             >
               <ProjectHudModule
                 project={project}
                 variant={isFeatured ? "featured" : "satellite"}
-                focused={isFocused}
-                dimmed={isDimmed}
+                focused={false}
+                dimmed={false}
                 onSelect={() => toggle(project.id)}
                 {...moduleProps}
               />
@@ -532,35 +580,60 @@ export function ProjectHudLayout({
 
       {/* Mobile / tablet fallback grid */}
 
-      <div className="grid gap-3 md:hidden">
-        {sorted.map((project) => {
-          const isFocused = focusedId === project.id;
-
-          const isDimmed = hasFocus && !isFocused;
-
-          return (
+      {!hasFocus && (
+        <div className="grid gap-3 md:hidden">
+          {sorted.map((project) => (
             <ProjectHudModule
               key={project.id}
-
               project={project}
-
               variant={project.id === featured.id ? "featured" : "satellite"}
-
-              focused={isFocused}
-
-              dimmed={isDimmed}
-
+              focused={false}
+              dimmed={false}
               onSelect={() => toggle(project.id)}
-
               {...moduleProps}
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {focusedProject && (
+        <div
+          className="hud-projection-backdrop"
+          onClick={() => focus(null)}
+          aria-hidden="true"
+        />
+      )}
+
+      {focusedProject && (
+        <div className="hud-projection-layer">
+          <article className="hud-projection-panel hud-scan-sweep mx-auto w-full max-w-lg md:max-w-2xl">
+            <header className="mb-3 flex items-center justify-between gap-2">
+              <p className="jarvis-status-line">Project projection</p>
+              <button
+                type="button"
+                onClick={() => focus(null)}
+                className="hud-tile-btn text-xs"
+                aria-label="Close projection"
+              >
+                Dismiss
+              </button>
+            </header>
+            <ProjectHudModule
+              project={focusedProject}
+              variant={
+                focusedProject.id === featured.id ? "featured" : "satellite"
+              }
+              focused
+              dimmed={false}
+              {...moduleProps}
+            />
+          </article>
+        </div>
+      )}
 
       {hasFocus && (
-        <p className="mt-3 text-center text-[10px] text-slate-600">
-          Select project to project forward · Esc to dismiss
+        <p className="relative z-[60] mt-4 text-center text-[10px] text-slate-600 md:fixed md:bottom-6 md:left-0 md:right-0">
+          Tap chip to switch · Esc to dismiss
         </p>
       )}
     </div>

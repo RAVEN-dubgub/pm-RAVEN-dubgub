@@ -1728,6 +1728,64 @@ body {
   cursor: pointer;
 }
 
+.hud-task-orbit-ring-focus,
+.hud-project-orbit-field-focus {
+  min-height: 240px;
+}
+
+.hud-orbit-chip {
+  display: inline-flex;
+  max-width: 9.5rem;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  background: rgba(8, 14, 28, 0.82);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  line-height: 1.2;
+  color: rgb(203 213 225);
+  opacity: 0.62;
+  transition:
+    opacity 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.hud-orbit-chip:hover {
+  opacity: 0.92;
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.15);
+}
+
+.hud-orbit-chip-dot {
+  height: 0.375rem;
+  width: 0.375rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+
+.hud-orbit-chip-metric {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(232 121 249);
+}
+
+.hud-project-orbit-chip {
+  border-color: rgba(232, 121, 249, 0.22);
+}
+
+.hud-project-orbit-chip:hover {
+  border-color: rgba(232, 121, 249, 0.45);
+  box-shadow: 0 0 12px rgba(232, 121, 249, 0.15);
+}
+
+.hud-task-orbit-chip-slot,
+.hud-project-orbit-chip-slot {
+  pointer-events: auto;
+}
+
 .hud-projection-backdrop {
   position: fixed;
   inset: 0;
@@ -1768,8 +1826,14 @@ body {
   }
 }
 
-.holo-workspace:has(.hud-task-field-focus) .holo-orbit-main {
+.holo-workspace:has(.hud-task-field-focus) .holo-orbit-main,
+.holo-workspace:has(.hud-project-constellation-focus) .holo-orbit-main {
   z-index: 50;
+}
+
+.holo-workspace:has(.hud-project-constellation-focus) .holo-orbit-top {
+  position: relative;
+  z-index: 60;
 }
 
 .hud-projection-panel {
@@ -1831,6 +1895,10 @@ body {
 .hud-project-dimmed {
   opacity: 0.4;
   filter: blur(1.5px) saturate(0.7);
+  pointer-events: none;
+}
+
+.hud-project-constellation-focus .hud-project-satellite-orbit {
   pointer-events: none;
 }
 

@@ -103,6 +103,38 @@ function isPeerAssigned(task: TaskItem, currentUserId: string) {
   );
 }
 
+function TaskOrbitChip({
+  task,
+  onSelect,
+}: {
+  task: TaskItem;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect();
+      }}
+      className="hud-orbit-chip hud-task-orbit-chip"
+      aria-label={`Switch focus to ${task.title}`}
+    >
+      <span
+        className={`hud-orbit-chip-dot ${
+          task.priority === "HIGH"
+            ? "bg-rose-400"
+            : task.priority === "MEDIUM"
+              ? "bg-amber-400"
+              : "bg-emerald-400"
+        }`}
+        aria-hidden="true"
+      />
+      <span className="truncate">{task.title}</span>
+    </button>
+  );
+}
+
 function TaskTileBody({
   task,
 
@@ -489,10 +521,12 @@ export function TaskHudView({
 
   return (
     <div
-      className={`hud-task-field relative min-h-[560px] py-2 md:min-h-[620px] ${hasFocus ? "hud-task-field-focus" : ""}`}
+      className={`hud-task-field relative py-2 ${hasFocus ? "hud-task-field-focus min-h-[280px] md:min-h-[300px]" : "min-h-[560px] md:min-h-[620px]"}`}
       data-hud-focus={focusedId ?? undefined}
     >
-      <div className="hud-task-orbit-ring relative z-[1] hidden min-h-[520px] md:block">
+      <div
+        className={`hud-task-orbit-ring relative z-[1] hidden md:block ${hasFocus ? "hud-task-orbit-ring-focus" : "min-h-[520px]"}`}
+      >
         {tasks.map((task, index) => {
           const slot =
             tasks.length <= 1
@@ -501,69 +535,61 @@ export function TaskHudView({
 
           const isFocused = focusedId === task.id;
 
-          // Projection panel holds expanded content; keep orbit tiles compact and dimmed.
-          const isDimmed = hasFocus;
+          if (hasFocus && isFocused) return null;
 
           const overdue = isOverdue(task.dueDate, task.status);
 
           const blocked = isTaskBlocked(task.blockedBy);
 
+          const orbitStyle = {
+            left: `calc(50% + ${slot.x}px)`,
+            top: `calc(50% + ${slot.y}px)`,
+            ["--orbit-transform" as string]:
+              tasks.length <= 1
+                ? "translate(-50%, -50%)"
+                : `translate(-50%, -50%) rotate(${slot.angleDeg * 0.04}deg)`,
+            transform: "var(--orbit-transform)",
+            zIndex: 10 + index,
+          } as const;
+
+          if (hasFocus) {
+            return (
+              <div
+                key={task.id}
+                className="hud-task-orbit-chip-slot absolute"
+                style={orbitStyle}
+              >
+                <TaskOrbitChip task={task} onSelect={() => focus(task.id)} />
+              </div>
+            );
+          }
+
           return (
             <article
               key={task.id}
-
               role="button"
-
               tabIndex={0}
-
               aria-pressed={isFocused}
-
               onClick={() => toggle(task.id)}
-
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-
                   toggle(task.id);
                 }
               }}
-
-              className={`hud-task-tile hud-task-tile-orbit absolute ${tileWidthClass} ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused" : ""} ${isDimmed ? "hud-task-tile-dimmed" : ""} ${tasks.length <= 1 ? "hud-task-tile-solo" : ""}`}
-
-              style={{
-                left: `calc(50% + ${slot.x}px)`,
-
-                top: `calc(50% + ${slot.y}px)`,
-
-                ["--orbit-transform" as string]:
-                  tasks.length <= 1
-                    ? "translate(-50%, -50%)"
-                    : `translate(-50%, -50%) rotate(${slot.angleDeg * 0.04}deg)`,
-
-                transform: "var(--orbit-transform)",
-
-                zIndex: 10 + index,
-              }}
+              className={`hud-task-tile hud-task-tile-orbit absolute ${tileWidthClass} ${overdue ? "hud-task-tile-overdue" : ""} ${blocked ? "hud-task-tile-blocked" : ""} ${isFocused ? "hud-task-tile-focused" : ""} ${tasks.length <= 1 ? "hud-task-tile-solo" : ""}`}
+              style={orbitStyle}
             >
               <TaskTileBody
                 task={task}
-
                 currentUserId={currentUserId}
-
                 users={users}
-
                 checkInDrafts={checkInDrafts}
-
                 onCheckInDraftChange={onCheckInDraftChange}
-
                 onSubmitCheckIn={onSubmitCheckIn}
-
                 onUpdateTask={onUpdateTask}
-
                 onArchiveTask={onArchiveTask}
-
                 blockerOptionsForTask={blockerOptionsForTask}
-
                 expanded={false}
               />
             </article>
