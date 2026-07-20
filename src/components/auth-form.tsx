@@ -56,9 +56,11 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {mode === "signup" && (
-        <label className="block text-sm">
+        <label className="block text-sm" htmlFor="auth-name">
           <span className="mb-1 block text-slate-300">Name</span>
           <input
+            id="auth-name"
+            name="name"
             className="holo-input w-full px-3 py-2"
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -67,9 +69,11 @@ export function AuthForm({ mode }: AuthFormProps) {
           />
         </label>
       )}
-      <label className="block text-sm">
+      <label className="block text-sm" htmlFor="auth-email">
         <span className="mb-1 block text-slate-300">Email</span>
         <input
+          id="auth-email"
+          name="email"
           type="email"
           className="holo-input w-full px-3 py-2"
           value={email}
@@ -78,9 +82,11 @@ export function AuthForm({ mode }: AuthFormProps) {
           required
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm" htmlFor="auth-password">
         <span className="mb-1 block text-slate-300">Password</span>
         <input
+          id="auth-password"
+          name="password"
           type="password"
           className="holo-input w-full px-3 py-2"
           value={password}

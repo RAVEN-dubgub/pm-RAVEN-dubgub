@@ -188,6 +188,75 @@ function overdueCohortNudge(overdue: number) {
   return `${overdue} overdue task${overdue === 1 ? "" : "s"} on your plate - clearing ${overdue === 1 ? "it" : "them"} helps the cohort stay on track.`;
 }
 
+function HudWidgetSkeleton({ tall = false }: { tall?: boolean }) {
+  return (
+    <div
+      className={`hud-widget animate-pulse border border-cyan-500/10 bg-slate-900/40 ${tall ? "min-h-[9.5rem]" : "min-h-[5.5rem]"}`}
+      aria-hidden="true"
+    >
+      <div className="mb-3 h-2 w-16 rounded bg-slate-700/80" />
+      <div className="mb-2 h-7 w-12 rounded bg-slate-700/60" />
+      <div className="h-2 w-full max-w-[12rem] rounded bg-slate-800/80" />
+    </div>
+  );
+}
+
+function DashboardMetricsSkeleton() {
+  return (
+    <HoloWorkspace
+      top={
+        <div className="space-y-2" aria-hidden="true">
+          <div className="h-3 w-48 animate-pulse rounded bg-slate-800/80" />
+          <div className="h-9 w-28 animate-pulse rounded-full bg-slate-900/70" />
+        </div>
+      }
+      bottom={
+        <div className="flex gap-3 overflow-x-auto pb-1" aria-hidden="true">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="hud-chip-compact min-w-[min(280px,85vw)] shrink-0 animate-pulse space-y-2"
+            >
+              <div className="h-2 w-16 rounded bg-slate-700/80" />
+              <div className="h-3 w-32 rounded bg-slate-800/80" />
+              <div className="h-3 w-24 rounded bg-slate-800/60" />
+            </div>
+          ))}
+        </div>
+      }
+    >
+      <div
+        className="hud-dashboard-orbit"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Loading dashboard metrics"
+      >
+        <div className="hud-dashboard-orbit-inner">
+          <div className="hud-orbit-pos-12">
+            <HudWidgetSkeleton tall />
+          </div>
+          <div className="hud-orbit-pos-3">
+            <HudWidgetSkeleton />
+          </div>
+          <div className="hud-orbit-pos-9">
+            <HudWidgetSkeleton />
+          </div>
+          <div className="hud-orbit-pos-12-offset">
+            <HudWidgetSkeleton tall />
+          </div>
+          <div className="hud-orbit-pos-6">
+            <div className="hud-orbit-stat-row">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <HudWidgetSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </HoloWorkspace>
+  );
+}
+
 export function DashboardMetrics() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const { focusedId, toggle, focus } = useHoloFocus<string>(null, "widget");
@@ -249,16 +318,7 @@ export function DashboardMetrics() {
   }, [focusedId, metrics, setReadout]);
 
   if (!metrics) {
-    return (
-      <div className="space-y-4" aria-live="polite" aria-busy="true">
-        <div className="h-40 animate-pulse rounded-2xl bg-slate-900/80" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-900" />
-          ))}
-        </div>
-      </div>
-    );
+    return <DashboardMetricsSkeleton />;
   }
 
   const overdueNudge = overdueCohortNudge(metrics.overdueTasks);

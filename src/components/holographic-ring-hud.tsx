@@ -2,15 +2,13 @@
 
 
 
-import Link from "next/link";
-
 import { usePathname } from "next/navigation";
 
 import { useMemo } from "react";
 
 import { useHoloFocusPulse } from "@/lib/holo-focus";
 import { useHoloRingReadoutOptional } from "@/lib/holo-ring-context";
-import { dispatchHoloNavPick, HOLO_NAV_SEGMENTS, resolveHoloRoute } from "@/lib/holo-route";
+import { HOLO_NAV_SEGMENTS, resolveHoloRoute } from "@/lib/holo-route";
 
 
 
@@ -180,19 +178,17 @@ export function HolographicRingHud() {
 
             return (
 
-              <Link
+              <span
                 key={segment.href}
-                href={segment.href}
                 className={`holo-hud-orbit-label ${active ? "holo-hud-orbit-label-active" : ""}`}
                 style={{
                   left: `${50 + Math.cos(rad) * dist}%`,
                   top: `${50 + Math.sin(rad) * dist}%`,
                 }}
-                aria-label={segment.label}
-                onClick={() => dispatchHoloNavPick(segment.href)}
+                aria-hidden="true"
               >
                 {segment.label.slice(0, 3).toUpperCase()}
-              </Link>
+              </span>
 
             );
 
