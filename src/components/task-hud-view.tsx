@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import {
   formatDueDate,
@@ -21,7 +21,7 @@ import {
 } from "@/components/hud-primitives";
 
 import { TaskCoachPanel } from "@/components/task-coach-panel";
-import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
+import { orbitSlot, useClearHoloFocusOnNavigate, useHoloFocus } from "@/lib/holo-focus";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
 import { canDeleteTask } from "@/lib/tasks";
 
@@ -508,6 +508,9 @@ export function TaskHudView({
   const { setReadout } = useHoloRingReadout();
 
   const hasFocus = focusedId !== null;
+
+  const clearFocus = useCallback(() => focus(null), [focus]);
+  useClearHoloFocusOnNavigate(clearFocus);
 
   const orbitRadius = useMemo(() => {
     if (tasks.length <= 1) return 0;

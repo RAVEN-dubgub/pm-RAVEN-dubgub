@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HoloWorkspace } from "@/components/holo-workspace";
 import { HowToUse } from "@/components/how-to-use";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { ArcGauge, HudWidget } from "@/components/hud-primitives";
-import { useHoloFocus } from "@/lib/holo-focus";
+import { useClearHoloFocusOnNavigate, useHoloFocus } from "@/lib/holo-focus";
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
 
 type Metrics = {
@@ -193,6 +193,9 @@ export function DashboardMetrics() {
   const { focusedId, toggle, focus } = useHoloFocus<string>(null, "widget");
   const { setReadout } = useHoloRingReadout();
   const hasFocus = focusedId !== null;
+
+  const clearFocus = useCallback(() => focus(null), [focus]);
+  useClearHoloFocusOnNavigate(clearFocus);
   const [showGuide, setShowGuide] = useState(false);
   const [projectProgress, setProjectProgress] = useState<ProjectProgress[]>([]);
   const [nextActions, setNextActions] = useState<NextAction[]>([]);

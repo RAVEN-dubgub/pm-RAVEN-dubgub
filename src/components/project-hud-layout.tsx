@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isSmokeUser } from "@/lib/smoke-users";
 
 import { ArcGauge, HudWidget } from "@/components/hud-primitives";
 
-import { orbitSlot, useHoloFocus } from "@/lib/holo-focus";
+import { orbitSlot, useClearHoloFocusOnNavigate, useHoloFocus } from "@/lib/holo-focus";
 
 import { useHoloRingReadout } from "@/lib/holo-ring-context";
 import { computeTaskProgress } from "@/lib/task-progress";
@@ -445,6 +445,9 @@ export function ProjectHudLayout({
 
   const hasFocus = focusedId !== null;
 
+  const clearFocus = useCallback(() => focus(null), [focus]);
+  useClearHoloFocusOnNavigate(clearFocus);
+
   useEffect(() => {
     function onEscape(event: KeyboardEvent) {
       if (event.key === "Escape") focus(null);
@@ -688,9 +691,12 @@ export function ProjectHudStats({
 
   totalTasks: number;
 }) {
-  const { focusedId, toggle } = useHoloFocus<string>(null, "widget");
+  const { focusedId, toggle, focus } = useHoloFocus<string>(null, "widget");
 
   const hasFocus = focusedId !== null;
+
+  const clearFocus = useCallback(() => focus(null), [focus]);
+  useClearHoloFocusOnNavigate(clearFocus);
 
   const widgets = [
     {

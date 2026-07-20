@@ -15,8 +15,11 @@ export function resolveHoloRoute(pathname: string): HoloRoute {
   return "default";
 }
 
+export const HOLO_FOCUS_CLEAR_EVENT = "holo-focus-clear";
+
 export function dispatchHoloNavPick(route: string) {
   if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(HOLO_FOCUS_CLEAR_EVENT));
   window.dispatchEvent(
     new CustomEvent("holo-nav-pick", { detail: { route } }),
   );

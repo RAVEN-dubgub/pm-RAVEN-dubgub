@@ -1,6 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { HOLO_FOCUS_CLEAR_EVENT } from "@/lib/holo-route";
 
 export type HoloFocusKind = "nav" | "task" | "project" | "widget";
 
@@ -55,6 +57,23 @@ export function useHoloFocusPulse() {
   }, []);
 
   return pulseKey;
+}
+
+/** Drop projection/focus overlays when the route changes (e.g. header nav). */
+export function useClearHoloFocusOnNavigate(clear: () => void) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    clear();
+  }, [pathname, clear]);
+
+  useEffect(() => {
+    function onClear() {
+      clear();
+    }
+    window.addEventListener(HOLO_FOCUS_CLEAR_EVENT, onClear);
+    return () => window.removeEventListener(HOLO_FOCUS_CLEAR_EVENT, onClear);
+  }, [clear]);
 }
 
 /** Polar position on an elliptical orbit (degrees, px radius). */

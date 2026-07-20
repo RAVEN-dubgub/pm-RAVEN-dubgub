@@ -866,7 +866,8 @@ body {
 /* ── Navigation ── */
 .holo-header {
   position: relative;
-  z-index: 20;
+  /* Above projection backdrops (52) and orbit overlays (45) so nav always works. */
+  z-index: 70;
   border-bottom: 1px solid rgba(34, 211, 238, 0.12);
   background: rgba(4, 8, 20, 0.48);
   backdrop-filter: blur(24px) saturate(140%);
@@ -952,7 +953,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: 70;
   border-top: 1px solid rgba(34, 211, 238, 0.15);
   background: rgba(4, 8, 20, 0.55);
   backdrop-filter: blur(24px) saturate(140%);
@@ -1649,8 +1650,8 @@ body {
 .holo-hud-orbit-label {
   position: absolute;
   transform: translate(-50%, -50%);
-  /* Decorative only — header/bottom nav owns routing; auto here caused stray /tasks jumps through orbit gaps. */
-  pointer-events: none;
+  pointer-events: auto;
+  z-index: 1;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.5625rem;
   font-weight: 600;
